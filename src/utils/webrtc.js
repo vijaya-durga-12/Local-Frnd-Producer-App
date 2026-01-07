@@ -1,36 +1,49 @@
-import { RTCPeerConnection } from "react-native-webrtc";
+import {
+  RTCPeerConnection,
+  MediaStream,
+} from "react-native-webrtc";
 
 const ICE_SERVERS = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
-    {
-      urls: "turn:openrelay.metered.ca:443",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
   ],
+  iceCandidatePoolSize: 10,
 };
 
-export const createPC = ({ onIceCandidate, onIceState }) => {
-  const pc = new RTCPeerConnection(ICE_SERVERS);
- 
-  console.log("🌐 PeerConnection created",pc);
+export const createPC = ({ onIceCandidate, onTrack, onIceState }) => {
+  try {
+    const pc = new RTCPeerConnection(ICE_SERVERS);
 
-  pc.onicecandidate = (event) => {
-    if (event.candidate) {
-      console.log("🧊 ICE candidate generated");
-      onIceCandidate?.(event.candidate);
-    }
-  };
+    pc.onicecandidate = (event) => {
+      if (event?.candidate) {
+        onIceCandidate?.(event.candidate);
+      }
+    };
 
-  pc.oniceconnectionstatechange = () => {
-    console.log("🧊 ICE =", pc.iceConnectionState);
-    onIceState?.(pc.iceConnectionState);
-  };
+    pc.ontrack = (event) => {
+      if (event.streams?.[0]) {
+        onTrack?.(event.streams[0]);
+      } else if (event.track) {
+        const stream = new MediaStream();
+        stream.addTrack(event.track);
+        onTrack?.(stream);
+      }
+    };
 
-  pc.onconnectionstatechange = () => {
-    console.log("📡 PC =", pc.connectionState);
-  };
+    pc.oniceconnectionstatechange = () => {
+      console.log("🌐 ICE State:", pc.iceConnectionState);
+      onIceState?.(pc.iceConnectionState);
+    };
 
-  return pc;
+    pc.onsignalingstatechange = () => {
+      console.log("📡 Signaling State:", pc.signalingState);
+    };
+
+    return pc;
+  } catch (e) {
+    console.error("❌ RTCPeerConnection failed:", e);
+    return null;
+  }
 };

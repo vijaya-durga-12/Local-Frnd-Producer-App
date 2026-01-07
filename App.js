@@ -1,5 +1,5 @@
 // src/App.js
-import * as React from 'react';
+import React, { useEffect } from "react";
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Provider } from 'react-redux';
@@ -33,6 +33,10 @@ import SocketProvider from './src/socket/SocketProvider';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+
+  //  useEffect(() => {
+  //   setupCallKeep();   // ✅ MUST RUN ON APP START
+  // }, []);
   return (
     <Provider store={store}>
       <SocketProvider>
