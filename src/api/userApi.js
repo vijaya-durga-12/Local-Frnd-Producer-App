@@ -1,5 +1,4 @@
 import { MAIN_BASE_URL } from "./baseUrl1";
-
 export const user_Register = `${MAIN_BASE_URL}/api/auth/register`;
 export const user_login=`${MAIN_BASE_URL}/api/auth/login`
 export const user_Otp = `${MAIN_BASE_URL}/api/auth/verify-otp`;
@@ -18,3 +17,7 @@ export const friendAccept = `${MAIN_BASE_URL}/api/friend/accept`;
 export const friendPending  = `${MAIN_BASE_URL}/api/friend/pending`;
 export const friendStatus =  `${MAIN_BASE_URL}/api/friend/status`;
 export const friendUnfriend = `${MAIN_BASE_URL}/api/friend/unfriend`;
+
+
+export const Locationapi=`${MAIN_BASE_URL}/api/location/countries`;
+console.log(Locationapi)

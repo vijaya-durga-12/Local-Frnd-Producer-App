@@ -5,6 +5,7 @@ import photoReducer from "../features/photo/photoReducer";
 import randomuserReduce from "../features/RandomUsers/randomuserReducer";
 import languageReducer from "../features/language/languageReducer";
 import avatarsReducer from"../features/Avatars/avatarsReducer"
+import loccationReducer from"../features/Countries/locationReducer"
 import callReducer from"../features/calls/callReducer"
 import friendReducer from"../features/friend/friendReducer"
 
@@ -19,6 +20,7 @@ const rootReducer = combineReducers({
   avatars:avatarsReducer,
   friends:friendReducer,
   
+  location:loccationReducer
 });
 
 export default rootReducer;
