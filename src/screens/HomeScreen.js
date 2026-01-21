@@ -32,10 +32,10 @@ const activePals = [
 const HomeScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-const socketRef=useContext(SocketContext)
-const socket= socketRef?.current;
-
-  const { userdata } = useSelector((state) => state.user);
+const { socketRef, connected } = useContext(SocketContext);
+const socket = socketRef?.current;
+const { userdata } = useSelector((state) => state.user);
+const { incoming } = useSelector((state) => state.friends);
 
   const profilePhotoURL = userdata?.primary_image?.photo_url;
 
@@ -43,12 +43,10 @@ const socket= socketRef?.current;
     ? { uri: profilePhotoURL }
     : require("../assets/boy2.jpg");
 
-  /* ================= LOAD USER ================= */
   useEffect(() => {
     dispatch(userDatarequest());
   }, []);
 
-  /* ================= SOCKET (GLOBAL) ================= */
  useEffect(() => {
     if (!socket) return;
 
@@ -79,9 +77,20 @@ const socket= socketRef?.current;
           </View>
 
           <View style={styles.rightHeader}>
-            <TouchableOpacity style={{ marginRight: wp(3) }}>
-              <Icon name="bell-outline" size={iconSize(6)} color="#fff" />
-            </TouchableOpacity>
+            <View style={{ marginRight: wp(3) }}>
+  <TouchableOpacity
+    onPress={() => navigation.navigate("FriendRequestsScreen")}
+  >
+    <Icon name="bell-outline" size={iconSize(6)} color="#fff" />
+  </TouchableOpacity>
+
+  {incoming.length > 0 && (
+    <View style={styles.badge}>
+      <Text style={styles.badgeText}>{incoming.length}</Text>
+    </View>
+  )}
+</View>
+
 
             {/* COINS */}
             <View style={styles.coinBox}>
@@ -151,7 +160,7 @@ const socket= socketRef?.current;
         <View style={styles.connectRow}>
           <TouchableOpacity
             style={styles.connectBox}
-            onPress={() => navigation.navigate("TrainersCallpage")}
+            onPress={() => navigation.navigate("MaleHome")}
           >
             <Icon name="dice-5" size={iconSize(6)} color="#fff" />
             <Text style={styles.connectText}>Random Calls</Text>
@@ -171,42 +180,8 @@ const socket= socketRef?.current;
         <View style={{ height: hp(15) }} />
       </ScrollView>
 
-      {/* ================= BOTTOM NAV ================= */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Icon name="home-outline" size={iconSize(7)} color="#fff" />
-        </TouchableOpacity>
+  
 
-        <TouchableOpacity style={styles.navItem}>
-          <Icon name="message-outline" size={iconSize(7)} color="#fff" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.centerBtn}
-          onPress={() => navigation.navigate("TrainersCallpage")}
-        >
-          <Icon name="phone" size={iconSize(8)} color="#fff" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem}>
-          <Icon
-            name="clock-time-eight-outline"
-            size={iconSize(7)}
-            color="#fff"
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => navigation.navigate("ProfileScreen")}
-        >
-          <Icon
-            name="account-circle-outline"
-            size={iconSize(7.5)}
-            color="#fff"
-          />
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };
@@ -401,4 +376,24 @@ const styles = StyleSheet.create({
     marginBottom: hp(3),
     elevation: 15,
   },
+  badge: {
+  position: "absolute",
+  top: -6,
+  right: -6,
+  backgroundColor: "#ff0044",
+  borderRadius: 12,
+  minWidth: 22,
+  height: 22,
+  justifyContent: "center",
+  alignItems: "center",
+  paddingHorizontal: 6,
+  borderWidth: 1,
+  borderColor: "#fff",
+},
+
+badgeText: {
+  color: "#fff",
+  fontSize: 12,
+  fontWeight: "bold",
+},
 });

@@ -21,7 +21,7 @@ import ProfileScreen from "./src/screens/ProfileScreen"
 import PlanScreen from "./src/screens/PlansScreen"
 import UplodePhotoScreen from './src/screens/UplodePhotoScreen';
 import TrainersCallpage from './src/screens/TrainersCallpage';
-import VideocallCsreen from './src/screens/VideocallCsreen';
+import VideocallScreen from './src/screens/VideocallScreen';
 import AudiocallScreen from './src/screens/AudiocallScreen';
 import GirlsavatarScreen from './src/screens/GirlsavatarScreen';
 import BoysavatarScreen from './src/screens/BoysavatarScreen';
@@ -30,6 +30,13 @@ import OnboardScreen from './src/screens/OnboardScreen'
 import LanguageScreen from './src/screens/LanguageScreen'
 import ReciverHomeScreen from './src/screens/ReciverHomeScreen'
 import SocketProvider from './src/socket/SocketProvider';   
+import RecentsCallHistoryScreen from './src/screens/RecentsCallHistoryScreen';   
+import MaleHomeTabs from './src/navigation/MaleHomeTabs';   
+import MessagesScreen from './src/screens/MessagesScreen';   
+import ReceiverBottomTabs from './src/navigation/ReceiverBottomTabs';   
+import FriendRequestsScreen from './src/screens/FriendRequestsScreen';   
+
+
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -58,7 +65,7 @@ export default function App() {
         <Stack.Screen name="PlanScreen" component={PlanScreen} />
         <Stack.Screen name="UplodePhotoScreen" component={UplodePhotoScreen} />
  <Stack.Screen name="TrainersCallpage" component={TrainersCallpage} />    
-  <Stack.Screen name="VideocallCsreen" component={VideocallCsreen} />    
+  <Stack.Screen name="VideocallScreen" component={VideocallScreen} />    
     <Stack.Screen name="AudiocallScreen" component={AudiocallScreen} />    
 <Stack.Screen name='OnboardScreen' component={OnboardScreen}/>
       <Stack.Screen name="GirlsavatarScreen" component={GirlsavatarScreen} />  
@@ -66,7 +73,18 @@ export default function App() {
   <Stack.Screen name='ChoosePlanScreen' component={ChoosePlanScreen}/>
 <Stack.Screen name='LanguageScreen' component={LanguageScreen}/>
 <Stack.Screen name='ReciverHomeScreen' component={ReciverHomeScreen}/>
+<Stack.Screen name='RecentsCallHistoryScreen' component={RecentsCallHistoryScreen}/>
+<Stack.Screen name='MessagesScreen' component={MessagesScreen}/>
+<Stack.Screen name="MaleHomeTabs" component={MaleHomeTabs} options={{ headerShown: false }}/>
+<Stack.Screen name="ReceiverBottomTabs" component={ReceiverBottomTabs} options={{ headerShown: false }}/>
+<Stack.Screen
+  name="FriendRequestsScreen"
+  component={FriendRequestsScreen}
+/>
 
+   
+   
+   
    </Stack.Navigator>
       </NavigationContainer>
       </SocketProvider>

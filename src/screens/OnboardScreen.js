@@ -67,9 +67,9 @@ const OnboardScreen = ({ navigation }) => {
 
       if (token && user_id) {
         if (gender === "Male") {
-          routeName = "Home";
+          routeName = "MaleHomeTabs";
         } else if (gender === "Female") {
-          routeName = "ReciverHomeScreen"; // ✅ MATCHES STACK NAME
+          routeName = "ReceiverBottomTabs"; // ✅ MATCHES STACK NAME
         }
       }
 
