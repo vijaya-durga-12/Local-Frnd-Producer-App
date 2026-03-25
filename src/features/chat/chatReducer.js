@@ -160,36 +160,39 @@ case CHAT_MESSAGE_ADD: {
   const old = state.conversations[otherUserId] || [];
   const normalized = message.message ?? message;
 
-  // ✅ REMOVE TEMP MESSAGE (important fix)
-  const filtered = old.filter(m => {
+  let updated = false;
+
+  const newList = old.map(m => {
     const msg = m.message ?? m;
 
-    // remove temp message if same sender + content
+    // ✅ if same message → update it
     if (
-      String(msg.message_id).startsWith('temp-') &&
-      Number(msg.sender_id) === Number(normalized.sender_id) &&
-      msg.content === normalized.content
+      msg.message_id === normalized.message_id ||
+      (
+        String(msg.message_id).startsWith("temp-") &&
+        msg.content === normalized.content
+      )
     ) {
-      return false;
+      updated = true;
+      return {
+        ...msg,
+        ...normalized, // ✅ overwrite delivered + is_read
+      };
     }
 
-    return true;
+    return msg;
   });
 
-  // ✅ PREVENT DUPLICATE REAL MESSAGE
-  const exists = filtered.some(
-    m =>
-      String((m.message ?? m).message_id) ===
-      String(normalized.message_id)
-  );
-
-  if (exists) return state;
+  // ✅ if not found → add new
+  if (!updated) {
+    newList.push(normalized);
+  }
 
   return {
     ...state,
     conversations: {
       ...state.conversations,
-      [otherUserId]: [...filtered, normalized],
+      [otherUserId]: newList,
     },
   };
 }

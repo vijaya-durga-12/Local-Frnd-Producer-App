@@ -114,7 +114,7 @@ const ChatScreen = ({ route, navigation }) => {
   const [text, setText] = useState('');
 
   /* active chat */
-
+console.log("OPEN CHAT:", myId, user.user_id);
   useEffect(() => {
     dispatch(chatSetActive(user.user_id));
     return () => dispatch(chatClearActive());
@@ -127,17 +127,16 @@ const ChatScreen = ({ route, navigation }) => {
   }, [dispatch, user.user_id]);
 
   /* mark whole conversation read (API) */
-
- 
-
-  useEffect(() => {
+useEffect(() => {
   if (!conversationId) return;
 
-  socketRef.current?.emit('chat_read_all', {
-    conversationId,
+  socketRef.current?.emit("chat_read_all", {
+    conversationId
   });
 
 }, [conversationId]);
+
+
   /* clear badge */
 
   useEffect(() => {
@@ -145,7 +144,18 @@ const ChatScreen = ({ route, navigation }) => {
   }, [dispatch, user.user_id]);
 
   /* ---------------- SOCKET READ ---------------- */
+useEffect(() => {
+  socketRef.current?.emit("chat_open", {
+    userId: myId,
+    chattingWith: user.user_id
+  });
 
+  return () => {
+    socketRef.current?.emit("chat_close", {
+      userId: myId
+    });
+  };
+}, []);
  
 
   /* send text */
@@ -160,7 +170,9 @@ const tempMessage = {
   content: text,
   message_type: 'text',
   sent_at: new Date().toISOString(),
-  status: 'sent', // ✅
+ 
+  delivered: 0,
+  is_read: 0,
 };
   // ✅ CORRECT DISPATCH
   dispatch(chatMessageAdd({
@@ -253,7 +265,7 @@ const startFriendCall = (type) => {
 
     messages.forEach(item => {
       const msg = item.message ?? item;
-      map.set(msg.message_id, msg);
+     map.set(String(msg.message_id), msg);
     });
 
     const sorted = [...map.values()].sort(

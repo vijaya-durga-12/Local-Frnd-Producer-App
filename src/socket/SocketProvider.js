@@ -65,6 +65,12 @@ console.log("SocketProvider token:", token);
         dispatch(fetchUnreadCount());
       });
 
+      socket.on("new_message_notification", data => {
+  console.log("🔔 New message notification:", data);
+
+  // optional:
+  dispatch(fetchUnreadCount());
+});
 
 socket.on('chat_receive', msg => {
 
@@ -75,6 +81,7 @@ socket.on('chat_receive', msg => {
 
   const senderId = msg.sender_id ?? msg.senderId;
   const receiverId = msg.receiver_id ?? msg.receiverId;
+const isSender = Number(senderId) === Number(myId);
 
   if (senderId !== myId && receiverId !== myId) return;
 
@@ -88,7 +95,9 @@ const normalizedMsg = {
   is_read: msg.is_read ?? 0,
   delivered: msg.delivered ?? 0, // ✅ ADD THIS
 };
-  // ✅ STEP 1: ADD MESSAGE TO CHAT
+if (isSender) {
+  return; // prevent duplicate
+}
   dispatch(chatMessageAdd({
     otherUserId,
     message: normalizedMsg,
