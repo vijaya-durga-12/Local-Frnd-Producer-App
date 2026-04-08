@@ -181,7 +181,7 @@ const MessagesScreen = ({ navigation }) => {
               <Ionicons name="search" size={18} color="#999" />
               <TextInput
                 placeholder="Search"
-                value={search}
+                value={search}  
                 onChangeText={setSearch}
                 style={styles.searchInput}
                 placeholderTextColor="#999"

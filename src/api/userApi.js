@@ -23,10 +23,10 @@ export const friendUnfriend = `${MAIN_BASE_URL}/api/friend/unfriend`;
 export const statesapi=`${MAIN_BASE_URL}/api/location/states`;
 export const citiesapi=`${MAIN_BASE_URL}/api/location/cities`
 export const Locationapi=`${MAIN_BASE_URL}/api/location/countries`;
-export const yourinterest =`${MAIN_BASE_URL}/api/interest/all`
-export const selectinterest =`${MAIN_BASE_URL}/api/userinterest/`
-export const lifestycategory=`${MAIN_BASE_URL}/api/lifestylecategory/all`
-export const lifeStyleallapi=`${MAIN_BASE_URL}/api/lifestyle/all`
+export const yourinterest =`${MAIN_BASE_URL}/api/interest`
+export const selectinterest =`${MAIN_BASE_URL}/api/userinterest`
+export const lifestycategory=`${MAIN_BASE_URL}/api/lifestylecategory`
+export const lifeStyleallapi=`${MAIN_BASE_URL}/api/lifestyle`
 export const userlifestyleapi=`${MAIN_BASE_URL}/api/userlifestyle/`
 export const otheruserapi=`${MAIN_BASE_URL}/api/userprofile/profile`
 
@@ -50,7 +50,7 @@ export const searching_females = `${MAIN_BASE_URL}/api/call/searching-females`;
 export const call_connected_details =`${MAIN_BASE_URL}/api/call/connected-details`;
 export const direct_call = `${MAIN_BASE_URL}/api/call/direct-connect`; // MALE
 export const friend_connect =`${MAIN_BASE_URL}/api/call/friend-connect`;
-
+export const cancel_waiting = `${MAIN_BASE_URL}/api/call/cancel-waiting`;
 
 export const chatHistoryApi = `${MAIN_BASE_URL}/api/chat/messages`;
 export const chatDeleteApi  = `${MAIN_BASE_URL}/api/chat/messages`;
