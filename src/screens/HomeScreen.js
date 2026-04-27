@@ -8,7 +8,6 @@ import {
   Dimensions,
   TextInput,
   FlatList,
-  SafeAreaView,
   Platform,
   StatusBar,
 } from 'react-native';
@@ -31,6 +30,7 @@ import OffersSectionScreen from './OffersSectionScreen';
 import ActiveDostSectionScreen from './ActiveDostSectionScreen';
 import BottomCallPills from '../components/BottomCallPills';
 import HomeHeader from '../components/HomeHeader';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
@@ -143,44 +143,45 @@ const HomeScreen = () => {
 
   return (
     <WelcomeScreenbackgroungpage>
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
         <StatusBar
           translucent
           backgroundColor="transparent"
           barStyle="dark-content"
         />
 
-        <View style={styles.container}>
-          <View style={styles.headerContainer}>
-            <HomeHeader
-              withSpacing
-              navigation={navigation}
-              userdata={userdata}
-              unread={unread}
-              imageUrl={imageUrl}
-              wp={wp}
-              hp={hp}
-            />
-
-            <View style={styles.searchContainer}>
-              <Icon name="magnify" size={wp(5.5)} color="#999" />
-              <TextInput
-                placeholder="Search"
-                placeholderTextColor="#8E8E93"
-                style={styles.searchInput}
-              />
-            </View>
-          </View>
-
-          <FlatList
-            data={sections}
-            keyExtractor={item => item.id}
-            renderItem={renderItem}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContent}
+        {/* HEADER */}
+        <View style={styles.headerContainer}>
+          <HomeHeader
+            withSpacing
+            navigation={navigation}
+            userdata={userdata}
+            unread={unread}
+            imageUrl={imageUrl}
+            wp={wp}
+            hp={hp}
           />
+
+          {/* SEARCH */}
+          <View style={styles.searchContainer}>
+            <Icon name="magnify" size={wp(5.5)} color="#999" />
+            <TextInput
+              placeholder="Search"
+              placeholderTextColor="#8E8E93"
+              style={styles.searchInput}
+            />
+          </View>
         </View>
-      </SafeAreaView>
+
+        {/* LIST */}
+        <FlatList
+          data={sections}
+          keyExtractor={item => item.id}
+          renderItem={renderItem}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        />
+      </View>
     </WelcomeScreenbackgroungpage>
   );
 };
@@ -188,21 +189,12 @@ const HomeScreen = () => {
 export default HomeScreen;
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-
   container: {
     flex: 1,
   },
 
   headerContainer: {
     paddingHorizontal: wp(4),
-    paddingTop:
-      Platform.OS === 'android'
-        ? (StatusBar.currentHeight || 0) + hp(1.5)
-        : hp(1.2),
     paddingBottom: hp(1.2),
   },
 
@@ -316,10 +308,10 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
-    paddingBottom: hp(2),
+    paddingBottom: hp(10),
   },
 
   callsWrapper: {
-    marginBottom: hp(1),
+    marginBottom: hp(0.5),
   },
 });
