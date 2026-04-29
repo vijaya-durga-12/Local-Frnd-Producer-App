@@ -99,22 +99,26 @@ screenOptions={{
   tabBarShowLabel: false,
 
   tabBarStyle: {
-    position: "fixed",
-    left: 40,
-    right: 40,
-    bottom: 20,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#ffffff",
-    borderTopWidth: 0,
-    elevation: 8,
-  },
+  position: "absolute",
+  left: 40,
+  right: 40,
+  
+  height: 60,
+  borderRadius: 20,
+  backgroundColor: "#ffffff",
+  borderTopWidth: 0,
+  elevation: 8,
+},
 
   tabBarItemStyle: {
     justifyContent: "center",
     alignItems: "center",
     paddingTop: 10,
   },
+
+  sceneContainerStyle: {
+  paddingBottom: 100,
+},
 
   // ✅ ONLY ADDED THIS
   tabBarBackground: () => (
@@ -127,7 +131,7 @@ screenOptions={{
           alignItems: "center",
           width: "100%",
           height: "100%",
-          paddingHorizontal: 60,
+          paddingHorizontal: 90,
         }}
       >
         {[1, 2, 3].map((_, index) => (
