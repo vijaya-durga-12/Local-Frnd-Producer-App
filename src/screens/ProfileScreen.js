@@ -27,8 +27,8 @@ const GradientHeart = ({ size = 140, style }) => {
     >
       <LinearGradient
         colors={[
-          'rgba(255,255,255,0.5)', // top
-          'rgba(152,50,248,0.15)', // bottom
+          'rgba(255,255,255,0.5)', 
+          'rgba(152,50,248,0.15)', 
         ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }} // 180deg
