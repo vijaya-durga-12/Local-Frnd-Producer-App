@@ -217,23 +217,20 @@ const FillYourProfileScreen = ({ navigation, route }) => {
               <DateTimePicker
                 value={date}
                 mode="date"
+                display={Platform.OS === 'android' ? 'default' : 'spinner'}
                 maximumDate={new Date()}
-                onChange={(event, selectedDate) => {
-  if (event.type === 'dismissed') {
-    setShowDatePicker(false);
-    return;
-  }
+              onChange={(event, selectedDate) => {
+  setShowDatePicker(false);
 
-  if (selectedDate) {
-    setShowDatePicker(false);
+  if (!selectedDate) return; // 🔥 important
 
-    const day = selectedDate.getDate().toString().padStart(2, '0');
-    const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
-    const year = selectedDate.getFullYear();
+  setDate(selectedDate);
 
-    setDob(`${day}-${month}-${year}`);
-    setDate(selectedDate); // 🔥 important
-  }
+  const day = selectedDate.getDate().toString().padStart(2, '0');
+  const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
+  const year = selectedDate.getFullYear();
+
+  setDob(`${day}-${month}-${year}`);
 }}
               />
             )}

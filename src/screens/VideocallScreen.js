@@ -67,6 +67,8 @@ const VideocallScreen = ({ route, navigation }) => {
   const [seconds, setSeconds] = useState(0);
 
   const [micOn, setMicOn] = useState(true);
+  const [otherMicOn, setOtherMicOn] = useState(true);
+
   const [cameraOn, setCameraOn] = useState(true);
   const [speakerOn, setSpeakerOn] = useState(false);
 
@@ -436,10 +438,55 @@ const VideocallScreen = ({ route, navigation }) => {
       }
     };
   }, []);
+
+  useEffect(() => {
+  const socket = socketRef.current;
+  if (!socket) return;
+
+  const handleMic = ({ user_id, micOn }) => {
+    if (String(user_id) !== String(myId)) {
+      setOtherMicOn(micOn);
+    }
+  };
+
+  socket.on('mic_status_update', handleMic);
+
+  return () => {
+    socket.off('mic_status_update', handleMic);
+  };
+}, []);
   /* ---------------- UI ---------------- */
 
   return (
     <View style={styles.container}>
+       {!otherMicOn && (
+      <View style={{
+        position: 'absolute',
+        top: 90,
+        right: 20,
+        backgroundColor: '#FF4D4F',
+        padding: 6,
+        borderRadius: 20,
+        zIndex: 20
+      }}>
+        <Ionicons name="mic-off" size={16} color="#fff" />
+      </View>
+    )}
+
+    {!micOn && (
+      <View style={{
+        position: 'absolute',
+        top: 90,
+        left: 20,
+        backgroundColor: '#FF4D4F',
+        padding: 6,
+        borderRadius: 20,
+        zIndex: 20
+      }}>
+        <Ionicons name="mic-off" size={16} color="#fff" />
+      </View>
+    )}
+
       {!connectedCallDetails ? (
         <View style={styles.waiting}>
           <Text style={{ color: 'white' }}>Loading call...</Text>
@@ -522,10 +569,22 @@ const VideocallScreen = ({ route, navigation }) => {
           icon={micOn ? 'mic' : 'mic-off'}
           onPress={() => {
             const track = localStreamRef.current?.getAudioTracks()[0];
-            if (!track) return;
+if (!track) return;
 
-            track.enabled = !track.enabled;
-            setMicOn(track.enabled);
+const newState = !track.enabled;
+
+track.enabled = newState;
+setMicOn(newState);
+
+const socket = socketRef.current;
+
+if (socket && socket.connected) {
+  socket.emit('mic_status', {
+    session_id,
+    user_id: myId,
+    micOn: newState,
+  });
+}
           }}
         />
 
