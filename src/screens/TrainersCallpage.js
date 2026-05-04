@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
 
   bottomPillsContainer: {
   position: 'absolute',
-  bottom: 0, // 🔥 adjust this value (0, 10, 20)
+  bottom: 0,
   left: 0,
   right: 0,
   alignItems: 'center',

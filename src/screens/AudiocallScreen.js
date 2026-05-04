@@ -49,7 +49,8 @@ const AudiocallScreen = ({ route, navigation }) => {
 
   const other =
     String(caller?.user_id) === String(myId) ? connectedUser : caller;
-
+  console.log(other);
+  console.log(me);
   const pcRef = useRef(null);
   const localStreamRef = useRef(null);
   const pendingIceRef = useRef([]);
@@ -64,6 +65,7 @@ const AudiocallScreen = ({ route, navigation }) => {
 
   const [connectedUI, setConnectedUI] = useState(false);
   const [micOn, setMicOn] = useState(true);
+  const [otherMicOn, setOtherMicOn] = useState(true);
   const [speakerOn, setSpeakerOn] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [iceState, setIceState] = useState('new');
@@ -379,13 +381,35 @@ const AudiocallScreen = ({ route, navigation }) => {
 
   /* ================= CONTROLS ================= */
 
-  const toggleMic = () => {
-    const track = localStreamRef.current?.getAudioTracks()[0];
-    if (!track) return;
+  // const toggleMic = () => {
+  //   const track = localStreamRef.current?.getAudioTracks()[0];
+  //   if (!track) return;
 
-    track.enabled = !track.enabled;
-    setMicOn(track.enabled);
-  };
+  //   track.enabled = !track.enabled;
+  //   setMicOn(track.enabled);
+  // };
+
+  const toggleMic = () => {
+  const track = localStreamRef.current?.getAudioTracks()[0];
+  if (!track) return;
+
+  const newState = !track.enabled;
+
+  track.enabled = newState;
+  setMicOn(newState);
+
+  const socket = socketRef.current;
+
+  if (socket && socket.connected) {
+    socket.emit('mic_status', {
+      session_id,
+      user_id: myId,
+      micOn: newState,
+    });
+  } else {
+    console.log('⚠️ Socket not connected, mic state not sent');
+  }
+};
 
   const toggleSpeaker = () => {
     const newVal = !speakerOn;
@@ -474,7 +498,22 @@ const AudiocallScreen = ({ route, navigation }) => {
       }
     };
   }, []);
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
 
+    const handleMic = ({ user_id, micOn }) => {
+      if (String(user_id) !== String(myId)) {
+        setOtherMicOn(micOn);
+      }
+    };
+
+    socket.on('mic_status_update', handleMic);
+
+    return () => {
+      socket.off('mic_status_update', handleMic);
+    };
+  }, []);
   /* ================= UI ================= */
 
   return (
@@ -496,9 +535,19 @@ const AudiocallScreen = ({ route, navigation }) => {
       {connectedCallDetails?.connected && me && other && (
         <View style={styles.usersRow}>
           <View style={styles.userCard}>
-            <Image source={{ uri: me.avatar }} style={styles.avatar} />
+            {/* <Image source={{ uri: me.avatar }} style={styles.avatar} /> */}
+            <View style={styles.avatarWrapper}>
+              <Image source={{ uri: me.avatar }} style={styles.avatar} />
+
+              {!micOn && (
+                <View style={styles.muteIcon}>
+                  <Ionicons name="mic-off" size={16} color="#fff" />
+                </View>
+              )}
+            </View>
+
             <Text style={styles.userName}>{me.name}</Text>
-            <Text style={styles.desc}>{me.about || 'No bio available'}</Text>
+            <Text style={styles.desc}>{me.bio || 'No bio available'}</Text>
           </View>
 
           <TouchableOpacity
@@ -508,9 +557,17 @@ const AudiocallScreen = ({ route, navigation }) => {
               navigation.navigate('AboutScreen');
             }}
           >
-            <Image source={{ uri: other.avatar }} style={styles.avatar} />
+            <View style={styles.avatarWrapper}>
+              <Image source={{ uri: other.avatar }} style={styles.avatar} />
+
+              {!otherMicOn && (
+                <View style={styles.muteIcon}>
+                  <Ionicons name="mic-off" size={16} color="#fff" />
+                </View>
+              )}
+            </View>{' '}
             <Text style={styles.userName}>{other.name}</Text>
-            <Text style={styles.desc}>{other.about || 'No bio available'}</Text>
+            <Text style={styles.desc}>{other.bio || 'No bio available'}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -721,5 +778,20 @@ const styles = StyleSheet.create({
     bottom: 10,
     fontSize: 11,
     color: '#555',
+  },
+  avatarWrapper: {
+    position: 'relative',
+  },
+
+  muteIcon: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#FF4D4F',
+    borderRadius: 12,
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
   },
 });

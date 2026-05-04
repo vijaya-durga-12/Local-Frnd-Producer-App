@@ -35,14 +35,12 @@ const LandingScreen = ({ navigation }) => {
 
   const handleNavigation = async () => {
     let nextScreen = 'OnboardScreen';
-    let nextScreen = 'OnboardScreen';
 
     try {
       const token = await AsyncStorage.getItem('twittoke');
       const gender = await AsyncStorage.getItem('gender');
 
-      if (token && token !== 'null' && token !== '' && gender) {
-        try {
+      
       if (token && token !== 'null' && token !== '' && gender) {
         try {
           const decoded = jwtDecode(token);
