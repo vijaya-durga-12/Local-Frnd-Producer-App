@@ -51,6 +51,7 @@ const ReciverWalletScreen = ({ navigation }) => {
             coins={rings}
             avatar={avatar}
             unread={0}
+            userdata={userdata}
           />
 
           <View style={styles.bgCircleOne} />

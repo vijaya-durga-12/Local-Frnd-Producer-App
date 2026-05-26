@@ -108,38 +108,7 @@ useEffect(() => {
   return () => socket.off('incoming_call', onIncomingCall);
 }, [role, connected]);
 
-  useEffect(() => {
-  if (!connected || !socketRef.current) return;
-
-  const socket = socketRef.current;
-
-  const onCallAccepted = ({ 
-    session_id, 
-    call_type: accepted_call_type, 
-    call_mode,
-    caller_id,    // ✅ who called first
-    receiver_id   // ✅ who joined
-  }) => {
-    if (navigatedRef.current) return;
-    navigatedRef.current = true;
-
-    dispatch(callDetailsRequest());
-
-    const screen =
-      accepted_call_type === 'VIDEO' ? 'VideocallScreen' : 'AudiocallScreen';
-
-    setTimeout(() => {
-      navigation.replace(screen, {
-        session_id,
-        caller_id,    // ✅ pass to call screen
-        receiver_id,  // ✅ pass to call screen
-      });
-    }, 800);
-  };
-
-  socket.on('call_accepted', onCallAccepted);
-  return () => socket.off('call_accepted', onCallAccepted);
-}, [connected, role]);
+ 
   // Handle Accepted Call Status
   // ✅ ADD THIS — handles friend_caller role timeout
 // ✅ ADD this effect — handles call_timeout for friend caller
@@ -193,10 +162,15 @@ useEffect(() => {
   };
 }, [role, connected]);
   // Handle Accepted Call Status — replace your existing one
+// ✅ REPLACE this useEffect in CallStatusScreen
 useEffect(() => {
   if (!call?.status) return;
 
   const status = call.status.toUpperCase();
+
+  // ✅ CRITICAL — skip friend calls entirely
+  // useCallHandler handles friend call navigation
+  if (call.is_friend) return;
 
   if (status === 'ACCEPTED') {
     if (navigatedRef.current) return;
@@ -210,8 +184,8 @@ useEffect(() => {
     setTimeout(() => {
       navigation.replace(screen, {
         session_id: call.session_id,
-        caller_id: call.caller_id,    // ✅ CRITICAL — pass caller_id
-        receiver_id: call.receiver_id, // ✅ pass receiver_id
+        caller_id: call.caller_id,
+        receiver_id: call.receiver_id,
       });
     }, 800);
   }

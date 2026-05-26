@@ -240,9 +240,7 @@ const ChatScreen = ({ route, navigation }) => {
   }, [messages]);
 
 
-  useEffect(() => {
-  flatRef.current?.scrollToEnd({ animated: true });
-}, [messages]);
+ 
 
 // ✅ ADD THIS HERE
 useEffect(() => {

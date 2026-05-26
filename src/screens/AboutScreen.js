@@ -85,16 +85,16 @@ const AboutScreen = ({ navigation, route }) => {
     return age;
   };
 
-  const name = user?.name || 'User';
-  const username = user?.username;
-  const gender = user?.gender || 'Single';
-  const age = getAge(user?.date_of_birth) || '23';
-  const language = profile?.language?.native_name || 'English';
+  const name = user?.name || 'name not available';
+  const username = user?.username || 'username not available';
+  const gender = user?.gender || 'gender not specified';
+  const age = getAge(user?.date_of_birth) || 'age not specified';
+  const language = profile?.language?.native_name || 'language not specified';
 
   const locationText = [
-    location?.city?.name || location?.city,
-    location?.state?.name || location?.state,
-    location?.country?.name || location?.country,
+    location?.city?.name || location?.city || 'city not specified',
+    location?.state?.name || location?.state || 'state not specified',
+    location?.country?.name || location?.country || 'country not specified',
   ]
     .filter(Boolean)
     .join(', ');
@@ -113,49 +113,63 @@ const AboutScreen = ({ navigation, route }) => {
   const isPending = currentStatus === 'PENDING_SENT' || localPending;
   const isReceived = currentStatus === 'PENDING_RECEIVED';
 
-  const renderFollowingText = () => {
-if (isMyProfile) {
+ const renderFollowingText = () => {
+  // ✅ My Profile (Edit visible)
+  if (isMyProfile) {
     return (
       <View style={styles.myProfileBadge}>
         <Text style={styles.myProfileText}>My Profile</Text>
       </View>
     );
   }
-    if (isFollowing) {
-      return (
-        <View style={styles.followingTextOnly}>
-          <Text style={styles.followingOnlyText}>Following</Text>
-        </View>
-      );
-    }
 
-    if (isPending) {
-      return (
-        <View style={styles.followingTextOnly}>
-          <Text style={styles.followingOnlyText}>Pending</Text>
-        </View>
-      );
-    }
+  // ✅ Heart visible → show +Follow
+  if (!isFollowing && !isPending && !isReceived) {
+    return (
+      <View style={styles.followingTextOnly}>
+        <Text style={styles.followingOnlyText}>+ Follow</Text>
+      </View>
+    );
+  }
 
-    if (isReceived) {
-      const req = incoming.find(r => r.sender_id === profileUserId);
-      if (!req) return null;
+  // ✅ Following
+  if (isFollowing) {
+    return (
+      <View style={styles.followingTextOnly}>
+        <Text style={styles.followingOnlyText}>Following</Text>
+      </View>
+    );
+  }
 
-      return (
-        <TouchableOpacity
-          style={styles.acceptBtn}
-          onPress={() => {
-            dispatch(friendAcceptRequest(req.request_id));
-            setTimeout(() => dispatch(friendStatusRequest(profileUserId)), 300);
-          }}
-        >
-          <Text style={styles.acceptText}>Accept</Text>
-        </TouchableOpacity>
-      );
-    }
+  // ✅ Pending
+  if (isPending) {
+    return (
+      <View style={styles.followingTextOnly}>
+        <Text style={styles.followingOnlyText}>Pending</Text>
+      </View>
+    );
+  }
 
-    return null;
-  };
+  // ✅ Accept request
+  if (isReceived) {
+    const req = incoming.find(r => r.sender_id === profileUserId);
+    if (!req) return null;
+
+    return (
+      <TouchableOpacity
+        style={styles.acceptBtn}
+        onPress={() => {
+          dispatch(friendAcceptRequest(req.request_id));
+          setTimeout(() => dispatch(friendStatusRequest(profileUserId)), 300);
+        }}
+      >
+        <Text style={styles.acceptText}>Accept</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  return null;
+};
 
   const renderFloatingAction = () => {
     if (isMyProfile) {
@@ -225,7 +239,7 @@ if (isMyProfile) {
               <View style={styles.distanceRow}>
                 <Icon name="location-outline" size={12} color="#d300ff" />
                 <Text style={styles.distanceText}>
-                  {locationText || 'Unknown location'}
+                  {locationText}
                 </Text>
               </View>
 
@@ -264,7 +278,7 @@ if (isMyProfile) {
             <View style={styles.chip}>
               <Icon name="location-outline" size={12} color="#444" />
               <Text style={styles.chipText}>
-                {locationText || 'Berlin, United Kingdom'}
+                {locationText}
               </Text>
             </View>
 
@@ -296,8 +310,8 @@ if (isMyProfile) {
                   <Icon name="leaf-outline" size={12} color="#444" />
                   <Text style={styles.chipText}>
                     {l?.name ||
-                      `${l?.category?.name || ''} :${
-                        l?.subcategory?.name || ''
+                      `${l?.category?.name || 'Name not specified'} :${
+                        l?.subcategory?.name || 'Subcategory not specified'
                       }`}
                   </Text>
                 </View>
@@ -313,7 +327,7 @@ if (isMyProfile) {
             {interests.length ? (
               interests.map((item, index) => (
                 <View key={index} style={styles.chip}>
-                  <Text style={styles.chipTextNoIcon}>{item?.name || ''}</Text>
+                  <Text style={styles.chipTextNoIcon}>{item?.name || 'Interest not specified'}</Text>
                 </View>
               ))
             ) : (

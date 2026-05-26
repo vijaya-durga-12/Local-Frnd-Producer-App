@@ -57,7 +57,6 @@ import StoryViewer from './src/screens/StoryViewer';
 import PaymentScreen from './src/screens/PaymentScreen';
 import ProcessingScreen from './src/screens/ProcessingScreen';
 import PaymentSuccessScreen from './src/screens/PaymentSuccessScreen';
-import MyProfileScreen from './src/screens/MyProfileScreen';
 
 /*
 IMPORTANT
@@ -144,7 +143,6 @@ function MainNavigator({ navigationRef, isNavReady }) {
       <Stack.Screen name="ReceiverBottomTabs" component={ReceiverBottomTabs} />
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
-      <Stack.Screen name="MyProfileScreen" component={MyProfileScreen} />
       <Stack.Screen name="MessagesScreen" component={MessagesScreen} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
       <Stack.Screen

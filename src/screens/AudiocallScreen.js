@@ -27,12 +27,12 @@ import EndCallConfirmModal from '../screens/EndCallConfirmationScreen';
 import { SocketContext } from '../socket/SocketProvider';
 import { createPC } from '../utils/webrtc';
 import callManager from '../utils/callManager';
-const PRIMARY = '#A020F0'; 
+const PRIMARY = '#A020F0';
 
 const AudiocallScreen = ({ route, navigation }) => {
   // ✅ Get caller_id from route params directly
   const { session_id, caller_id: routeCallerId } = route.params;
-  
+
   const { socketRef, connected } = useContext(SocketContext);
   const dispatch = useDispatch();
   const { userdata } = useSelector(state => state.user); // ✅ ADD THIS
@@ -68,6 +68,7 @@ const AudiocallScreen = ({ route, navigation }) => {
   const disableExitRef = useRef(false);
   const remoteEndedRef = useRef(false);
   const isInitialMountRef = useRef(true);
+  const connectedRef = useRef(false); // ✅ ADD with other refs
 
   const ripple1 = useRef(new Animated.Value(0)).current;
   const ripple2 = useRef(new Animated.Value(0)).current;
@@ -200,50 +201,56 @@ const AudiocallScreen = ({ route, navigation }) => {
       socket.on('audio_offer', onOffer);
       socket.on('audio_answer', onAnswer);
       socket.on('audio_ice_candidate', onIce);
+      // ✅ FIND this inside start() and REPLACE
       socket.on('audio_call_ended', () => {
         console.log('📴 CALL ENDED RECEIVED');
         remoteEndedRef.current = true;
         stopCallMedia();
 
-        setShowEndModal(true);
+        // ✅ connectedRef.current is a ref — always current inside closure
+        if (connectedRef.current) {
+          setShowEndModal(true);
+        } else {
+          dispatch(clearCall());
+          leaveScreen();
+        }
       });
-socket.on('audio_connected', async () => {
-  console.log('🚀 audio_connected');
+      socket.on('audio_connected', async () => {
+        console.log('🚀 audio_connected');
 
-  if (hasStartedRef.current) return;
-  hasStartedRef.current = true;
+        if (hasStartedRef.current) return;
+        hasStartedRef.current = true;
 
-  if (!pcRef.current) {
-    console.log('❌ PC not ready');
-    return;
-  }
+        if (!pcRef.current) {
+          console.log('❌ PC not ready');
+          return;
+        }
 
-  // ✅ Use routeCallerId directly — no retry loop needed
-  const isCaller = String(myId) === String(routeCallerId);
+        // ✅ Use routeCallerId directly — no retry loop needed
+        const isCaller = String(myId) === String(routeCallerId);
 
-  console.log('👤 My ID:', myId);
-  console.log('📞 Route Caller ID:', routeCallerId);
-  console.log('🎯 Am I caller?', isCaller);
+        console.log('👤 My ID:', myId);
+        console.log('📞 Route Caller ID:', routeCallerId);
+        console.log('🎯 Am I caller?', isCaller);
 
-  if (!isCaller) {
-    console.log('🙋 Receiver ready');
-    return;
-  }
+        if (!isCaller) {
+          console.log('🙋 Receiver ready');
+          return;
+        }
 
-  try {
-    console.log('📞 Caller → creating offer');
+        try {
+          console.log('📞 Caller → creating offer');
 
-    const offer = await pcRef.current.createOffer({
-      offerToReceiveAudio: true,
-    });
+          const offer = await pcRef.current.createOffer({
+            offerToReceiveAudio: true,
+          });
 
-    await pcRef.current.setLocalDescription(offer);
-    socket.emit('audio_offer', { session_id, offer });
-
-  } catch (err) {
-    console.log('❌ OFFER ERROR:', err);
-  }
-});
+          await pcRef.current.setLocalDescription(offer);
+          socket.emit('audio_offer', { session_id, offer });
+        } catch (err) {
+          console.log('❌ OFFER ERROR:', err);
+        }
+      });
     };
 
     start();
@@ -356,10 +363,9 @@ socket.on('audio_connected', async () => {
 
   const onConnected = () => {
     if (timerRef.current) return;
-
+    connectedRef.current = true;
     setConnectedUI(true);
 
-    // 🔥 FORCE AUDIO TRACK ENABLE (FIX FEMALE ISSUE)
     const localTrack = localStreamRef.current?.getAudioTracks()[0];
 
     if (localTrack) {
@@ -461,7 +467,10 @@ socket.on('audio_connected', async () => {
         navigation.dispatch(e.data.action);
         return;
       }
-
+      if (!connectedRef.current) {
+        navigation.dispatch(e.data.action);
+        return;
+      }
       e.preventDefault();
 
       Alert.alert('Exit from Call', 'Are you sure you want to exit the call?', [
@@ -479,14 +488,14 @@ socket.on('audio_connected', async () => {
     return unsubscribe;
   }, [navigation]);
   /* ================= AUTO CLEANUP ================= */
+  // ✅ REPLACE the auto cleanup useEffect in AudiocallScreen
   useEffect(() => {
     return () => {
-      if (!endedRef.current && !manualExitRef.current) {
+      // ✅ Only hangup if call was actually started AND not already ended
+      if (startedRef.current && !endedRef.current && !manualExitRef.current) {
+        console.log('🧹 Auto cleanup - emitting hangup');
         socketRef.current?.emit('audio_call_hangup', { session_id });
-
         stopCallMedia();
-
-        // ✅ ADD THIS
         callManager.reset();
         dispatch(clearCall());
       }

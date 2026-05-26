@@ -99,6 +99,7 @@ useEffect(() => {
   const remoteEndedRef = useRef(false);
   const disableExitRef = useRef(false);
   const isEndingCallRef = useRef(false);
+  const connectedRef = useRef(false);  // ✅ ADD with other refs
   /* ---------------- SWAP VIDEO ---------------- */
 
   const swapVideos = () => {
@@ -237,20 +238,22 @@ useEffect(() => {
         socket.on('video_answer', onAnswer);
         socket.on('video_ice_candidate', onIce);
 
-     socket.on('video_call_ended', () => {
+    // ✅ REPLACE video_call_ended inside start()
+socket.on('video_call_ended', () => {
   if (endedRef.current) return;
 
   console.log("📴 Remote ended");
-
   stopCallMedia();
-
   disableExitRef.current = true;
 
-  setTimeout(() => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();  // ✅ SAFE
-    }
-  }, 100);
+  if (connectedRef.current) {
+    setShowEndModal(true);       // ✅ show modal only if was connected
+  } else {
+    dispatch(clearCall());
+    setTimeout(() => {
+      if (navigation.canGoBack()) navigation.goBack();
+    }, 100);
+  }
 });
        socket.on('video_connected', async () => {
   console.log('🚀 video_connected');
@@ -358,6 +361,7 @@ useEffect(() => {
 
   const onConnected = () => {
     if (timerRef.current) return;
+  connectedRef.current = true;  // ✅ ADD THIS
 
     setConnectedUI(true);
 
@@ -404,12 +408,19 @@ const leaveScreen = () => {
   );
 };
   
-  useEffect(() => {
+  // ✅ REPLACE beforeRemove useEffect in VideocallScreen
+useEffect(() => {
   const unsubscribe = navigation.addListener('beforeRemove', e => {
     if (isEndingCallRef.current) return;
 
-    e.preventDefault();
+    if (disableExitRef.current) return;
 
+    // ✅ KEY — only block if call actually connected
+    if (!connectedRef.current) {
+      return;
+    }
+
+    e.preventDefault();
     setShowEndModal(true);
   });
 
@@ -417,20 +428,18 @@ const leaveScreen = () => {
 }, [navigation]);
   /* ---------------- AUTO CLEANUP ---------------- */
 
-  useEffect(() => {
+  // ✅ REPLACE the auto cleanup useEffect in VideocallScreen
+useEffect(() => {
   return () => {
-    if (!endedRef.current && !isEndingCallRef.current) {
+    if (startedRef.current && !endedRef.current && !isEndingCallRef.current) {
       console.log("🧹 Safe cleanup");
-
       try {
         socketRef.current?.emit('video_call_hangup', { session_id });
       } catch {}
-
       stopCallMedia();
     }
   };
 }, []);
-
   useEffect(() => {
   const socket = socketRef.current;
   if (!socket) return;
