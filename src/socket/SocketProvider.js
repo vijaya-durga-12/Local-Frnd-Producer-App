@@ -159,21 +159,7 @@ const SocketProvider = ({ children }) => {
   );
       });
 
-      socket.on("call_accepted", (data) => {
-  console.log("✅ CALL ACCEPTED SOCKET:", data);
-
-
-  dispatch(
-    incomingCallAccept({
-      session_id: data.session_id,
-      call_type: data.call_type,
-      is_friend: data.is_friend,
-       caller_id: data.caller_id,
-       receiver_id: data.receiver_id,
-      call_mode: data.is_friend ? "FRIEND" : "RANDOM",
-    })
-  );
-});
+      
 
       socket.on('call_accepted', data => {
         dispatch(

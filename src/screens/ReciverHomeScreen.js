@@ -80,6 +80,7 @@ const ReciverHomeScreen = ({ navigation }) => {
             coins={coins}
             avatar={avatar}
             unread={unread}
+            userdata={userdata}
           />
         </View>
 

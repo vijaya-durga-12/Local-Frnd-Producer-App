@@ -366,7 +366,7 @@ console.log("🔥 TrainersCallPage users:", users);
                           />
                         </View>
                       </View>
-                  <Text style={styles.userText}> {item.name}</Text>
+                  <Text style={styles.userText}> name: {item.name}</Text>
                     </TouchableOpacity>
                   </Animated.View>
                 );

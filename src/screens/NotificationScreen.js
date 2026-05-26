@@ -12,7 +12,6 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-
 import {
   fetchNotifications,
   markNotificationsRead,
@@ -22,7 +21,8 @@ import {
   friendAcceptRequest,
   friendRejectRequest,
 } from '../features/friend/friendAction';
-
+import WelcomeScreenbackgroundgpage from '../components/BackgroundPages/WelcomeScreenbackgroungpage.js';
+import Icon from 'react-native-vector-icons/Ionicons';
 import {
   FRIEND_ACCEPT_REQUEST,
   FRIEND_REJECT_REQUEST,
@@ -163,45 +163,50 @@ const NotificationScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <WelcomeScreenbackgroundgpage>
+      <View style={{ flex: 1 }}>
+        <StatusBar barStyle="dark-content" />
 
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Text style={styles.backArrow}>‹</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notification</Text>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon name="chevron-back" size={26} color="#000" />
+          </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>Notification</Text>
+        </View>
+
+        <SectionList
+          sections={sections}
+          keyExtractor={item => item.id.toString()}
+          renderItem={renderItem}
+          renderSectionHeader={({ section }) => (
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionLine} />
+              <Text style={styles.sectionTitle}>{section.title}</Text>
+            </View>
+          )}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: 30,
+            paddingHorizontal: 16,
+          }}
+          ListEmptyComponent={
+            <Text style={styles.empty}>
+              {loading ? 'Loading...' : 'No notifications'}
+            </Text>
+          }
+        />
       </View>
-
-      <SectionList
-        sections={sections}
-        keyExtractor={item => item.id.toString()}
-        renderItem={renderItem}
-        renderSectionHeader={({ section }) => (
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-        )}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 30 }}
-        ListEmptyComponent={
-          <Text style={styles.empty}>
-            {loading ? 'Loading...' : 'No notifications'}
-          </Text>
-        }
-      />
-    </SafeAreaView>
+    </WelcomeScreenbackgroundgpage>
   );
 };
 
 export default NotificationScreen;
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F3F5',
+
     paddingHorizontal: 18,
   },
   header: {
@@ -218,20 +223,45 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: '700',
+    marginLeft: 10,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 15,
+  },
+
+  sectionLine: {
+    width: 4,
+    height: 18,
+    backgroundColor: '#8A2DFF', // match interest screen theme
+    borderRadius: 4,
+    marginRight: 8,
+  },
+
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    marginTop: 10,
-    marginBottom: 18,
-    color: '#444',
+    fontWeight: '700',
+    color: '#222',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 25,
+    backgroundColor: '#FFFFFF',
+    padding: 12,
+    borderRadius: 16,
+    marginBottom: 12,
+
+    // shadow (iOS)
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+
+    // elevation (Android)
+    elevation: 3,
   },
   avatarBorder: {
     padding: 2,

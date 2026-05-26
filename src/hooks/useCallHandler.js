@@ -46,30 +46,32 @@ export default function useCallHandler(navigationRef, isNavReady) {
     // =============================
     // 👥 FRIEND FLOW
     // =============================
-    if (call.is_friend) {
-      if (status === "ACCEPTED") {
-        if (callManager.lastNavigatedSession === call.session_id) return;
-        callManager.lastNavigatedSession = call.session_id;
+    // ✅ REPLACE the friend call block in useCallHandler
+if (call.is_friend) {
+  if (status === 'ACCEPTED') {
+    // ✅ Strong dedup — both session AND status
+    const navKey = `${call.session_id}_${status}`;
+    if (callManager.lastNavigatedSession === navKey) return;
+    callManager.lastNavigatedSession = navKey;
 
-        console.log("➡️ FRIEND CALL SCREEN");
+    console.log("➡️ FRIEND CALL SCREEN");
 
-        // ✅ Get myId from store correctly
-        const myId = store.getState().user?.userdata?.user?.user_id;
+    const myId = store.getState().user?.userdata?.user?.user_id;
 
-        const screen =
-          call.call_type === "VIDEO"
-            ? "VideocallScreen"
-            : "AudiocallScreen";
+    const screen =
+      call.call_type === 'VIDEO'
+        ? 'VideocallScreen'
+        : 'AudiocallScreen';
 
-        callManager.safeNavigate(navigationRef, screen, {
-          session_id: call.session_id,
-          caller_id: call.caller_id,      // ✅ pass correctly
-          receiver_id: call.receiver_id,  // ✅ pass correctly
-        });
+    callManager.safeNavigate(navigationRef, screen, {
+      session_id: call.session_id,
+      caller_id: call.caller_id,
+      receiver_id: call.receiver_id,
+    });
 
-        return;
-      }
-    }
+    return;
+  }
+}
 
   }, [call, isNavReady]);
 }

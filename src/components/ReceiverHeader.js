@@ -27,7 +27,7 @@ const ReceiverHeader = ({
   coins,
   avatar,
   unread,
-  coinImg,
+  userdata,
 }) => {
   return (
     <View style={styles.topBar}>
@@ -80,8 +80,13 @@ const ReceiverHeader = ({
       
 
         <TouchableOpacity
-          onPress={() => navigation.navigate("MyProfileScreen")}
-        >
+  onPress={() =>
+    navigation.navigate("AboutScreen", {
+      userId: userdata?.user?.user_id,
+      isMyProfile: true,
+    })
+  }
+>
           {avatar ? (
             <Image source={{ uri: avatar }} style={styles.avatar} />
           ) : (
