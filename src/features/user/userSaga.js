@@ -10,7 +10,7 @@ import {
   newUserDataFailed
 } from "./userAction";
 
-import { NEW_USER_DATA_REQUEST, USER_DATA_REQUEST, USER_EDIT_REQUEST } from "./userType";
+import { NEW_USER_DATA_REQUEST, USER_DATA_REQUEST, USER_DATA_SILENT_REQUEST, USER_EDIT_REQUEST } from "./userType";
 import { user_Edit, USER_DATA, newuserapi } from "../../api/userApi";
 import { USER_LOGOUT_REQUEST } from "./userType";
 import { cancel, take, race } from "redux-saga/effects";
@@ -80,12 +80,13 @@ function* handleNewUserData(action) {
         },
       })
     );
-
+    
+   
     // ✅ PATCH SUCCESS (store only response.data)
     yield put(newUserDataSuccess(response.data));
 
     // 🔥 THIS IS THE KEY LINE (force refresh user)
-    yield put({ type: USER_DATA_REQUEST });
+    yield put({ type: USER_DATA_SILENT_REQUEST }); // ← CHANGE THIS
 
     
   } catch (error) {
@@ -98,9 +99,26 @@ function* handleNewUserData(action) {
 }
 }
 
+ function* handleUserDataSilent() {
+  try {
+    const token = yield call([AsyncStorage, "getItem"], "twittoke");
+    const response = yield call(() =>
+      axios.get(USER_DATA, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    );
+    // ✅ Only updates userdata, never touches userDataResponse
+    yield put(userDataSuccess(response.data));
+  } catch (error) {
+    // silent fail — don't show any alert
+    console.log('Silent refresh failed:', error.message);
+  }
+}
 
 export default function* userSaga() {
   yield takeLatest(USER_EDIT_REQUEST, handleUserEdit);
   yield takeLatest(USER_DATA_REQUEST, handleUserData);
    yield takeLatest(NEW_USER_DATA_REQUEST, handleNewUserData);
+     yield takeLatest(USER_DATA_SILENT_REQUEST, handleUserDataSilent); // ✅ ADD
+
 }

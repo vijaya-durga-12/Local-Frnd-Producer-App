@@ -32,7 +32,7 @@ const initialState = {
 };
 
 export default function chatReducer(state = initialState, action) {
- console.log("Chat Reducer received action:", action) ; 
+  console.log('Chat Reducer received action:', action);
   switch (action.type) {
     case CHAT_HISTORY_REQUEST:
       return {
@@ -68,33 +68,33 @@ export default function chatReducer(state = initialState, action) {
       };
     }
 
-//    case CHAT_HISTORY_SUCCESS: {
-//   const { otherUserId, messages } = action.payload;
+    //    case CHAT_HISTORY_SUCCESS: {
+    //   const { otherUserId, messages } = action.payload;
 
-//   const existing = state.conversations[otherUserId] || [];
+    //   const existing = state.conversations[otherUserId] || [];
 
-//   const map = new Map();
+    //   const map = new Map();
 
-//   [...existing, ...messages].forEach(m => {
-//     const msg = m.message ?? m;
-//     map.set(msg.message_id, msg);
-//   });
+    //   [...existing, ...messages].forEach(m => {
+    //     const msg = m.message ?? m;
+    //     map.set(msg.message_id, msg);
+    //   });
 
-//   return {
-//     ...state,
-//     loading: false,
-//     conversations: {
-//       ...state.conversations,
-//       [otherUserId]: Array.from(map.values()).sort(
-//         (a, b) => new Date(a.sent_at) - new Date(b.sent_at)
-//       ),
-//     },
-//     conversationIds: {
-//       ...state.conversationIds,
-//       [otherUserId]: action.payload.conversationId,
-//     },
-//   };
-// }
+    //   return {
+    //     ...state,
+    //     loading: false,
+    //     conversations: {
+    //       ...state.conversations,
+    //       [otherUserId]: Array.from(map.values()).sort(
+    //         (a, b) => new Date(a.sent_at) - new Date(b.sent_at)
+    //       ),
+    //     },
+    //     conversationIds: {
+    //       ...state.conversationIds,
+    //       [otherUserId]: action.payload.conversationId,
+    //     },
+    //   };
+    // }
     case CHAT_HISTORY_FAILED:
       return {
         ...state,
@@ -129,187 +129,103 @@ export default function chatReducer(state = initialState, action) {
         loading: false,
         error: action.payload,
       };
-   
 
-//    case CHAT_MESSAGE_ADD: {
-//   const { otherUserId, message } = action.payload;
+    case CHAT_MESSAGE_ADD: {
+      const { otherUserId, message } = action.payload;
 
-//   const old = state.conversations[otherUserId] || [];
-//   const normalized = message.message ?? message;
+      const old = state.conversations[otherUserId] || [];
+      const normalized = message.message ?? message;
 
-//   // ✅ STRICT duplicate check
-//   const exists = old.some(
-//     m =>
-//       String((m.message ?? m).message_id) ===
-//       String(normalized.message_id)
-//   );
+      // ✅ check if message already exists
+      const exists = old.some(m => {
+        const msg = m.message ?? m;
+        return String(msg.message_id) === String(normalized.message_id);
+      });
 
-//   if (exists) return state;
-
-//   return {
-//     ...state,
-//     conversations: {
-//       ...state.conversations,
-//       [otherUserId]: [...old, normalized],
-//     },
-//   };
-// }
-
-
-// case CHAT_MESSAGE_ADD: {
-//   const { otherUserId, message } = action.payload;
-
-//   const old = state.conversations[otherUserId] || [];
-//   const normalized = message.message ?? message;
-
-//   let updated = false;
-
-//   const newList = old.map(m => {
-//     const msg = m.message ?? m;
-
-//     // ✅ if same message → update it
-//     if (
-//       msg.message_id === normalized.message_id ||
-//       (
-//         String(msg.message_id).startsWith("temp-") &&
-//         msg.content === normalized.content
-//       )
-//     ) {
-//       updated = true;
-//       return {
-//         ...msg,
-//         ...normalized, // ✅ overwrite delivered + is_read
-//       };
-//     }
-
-//     return msg;
-//   });
-
-//   // ✅ if not found → add new
-//   if (!updated) {
-//     newList.push(normalized);
-//   }
-
-//   return {
-//     ...state,
-//     conversations: {
-//       ...state.conversations,
-//       [otherUserId]: newList,
-//     },
-//   };
-// }
-
-
-case CHAT_MESSAGE_ADD: {
-  const { otherUserId, message } = action.payload;
-
-  const old = state.conversations[otherUserId] || [];
-  const normalized = message.message ?? message;
-
-  let updated = false;
-
-  const newList = old.map(m => {
-    const msg = m.message ?? m;
-
-    // ✅ MATCH TEMP MESSAGE
-    if (
-      String(msg.message_id).startsWith("temp-") &&
-      msg.content === normalized.content &&
-      Number(msg.sender_id) === Number(normalized.sender_id)
-    ) {
-      updated = true;
+      // ❌ IMPORTANT: if exists → DO NOTHING
+      if (exists) return state;
 
       return {
-        ...normalized, // ✅ replace temp with real
+        ...state,
+        conversations: {
+          ...state.conversations,
+          [otherUserId]: [...old, normalized],
+        },
       };
     }
+    
+    case CHAT_MARK_READ_SUCCESS: {
+  if (action.payload?.messageId) {
+    const { messageId } = action.payload;
 
-    // ✅ MATCH SAME MESSAGE
-    if (String(msg.message_id) === String(normalized.message_id)) {
-      updated = true;
+    let hasChanged = false;
+    const conversations = {};
 
+    for (const uid in state.conversations) {
+      const oldList = state.conversations[uid];
+
+      const newList = oldList.map(m => {
+        const msg = m.message ?? m;
+
+        if (msg.message_id === messageId && !msg.is_read) {
+          hasChanged = true;
+          return {
+            ...msg,
+            is_read: 1,
+            read_at: msg.read_at || new Date().toISOString(),
+          };
+        }
+
+        return msg;
+      });
+
+      conversations[uid] = newList;
+    }
+
+    // 🔥 VERY IMPORTANT
+    if (!hasChanged) return state;
+
+    return {
+      ...state,
+      conversations,
+    };
+  }
+
+  const { otherUserId } = action.payload;
+
+  const list = state.conversations[otherUserId] || [];
+
+  let hasChanged = false;
+
+  const updated = list.map(m => {
+    const msg = m.message ?? m;
+
+    if (Number(msg.sender_id) === Number(otherUserId) && !msg.is_read) {
+      hasChanged = true;
       return {
         ...msg,
-        ...normalized,
+        is_read: 1,
+        delivered: 1,
       };
     }
 
     return msg;
   });
 
-  if (!updated) {
-    newList.push(normalized);
-  }
+  if (!hasChanged) return state;
 
   return {
     ...state,
     conversations: {
       ...state.conversations,
-      [otherUserId]: newList,
+      [otherUserId]: updated,
+    },
+    unread: {
+      ...state.unread,
+      [otherUserId]: 0,
     },
   };
 }
-    case CHAT_MARK_READ_SUCCESS: {
-      // single message read (socket)
-      if (action.payload?.messageId) {
-        const { messageId } = action.payload;
-
-        const conversations = {};
-
-        for (const uid in state.conversations) {
-          conversations[uid] = state.conversations[uid].map(m => {
-            const msg = m.message ?? m;
-
-            if (msg.message_id === messageId) {
-              return {
-                ...msg,
-                is_read: 1,
-                read_at: msg.read_at || new Date().toISOString(),
-              };
-            }
-
-            return { ...msg };
-          });
-        }
-
-        return {
-          ...state,
-          conversations,
-        };
-      }
-
-      // conversation read (API)
-      const { otherUserId } = action.payload;
-
-      const list = state.conversations[otherUserId] || [];
-
-      const updated = list.map(m => {
-        const msg = m.message ?? m;
-
-        if (Number(msg.sender_id) === Number(otherUserId)) {
-          return {
-            ...msg,
-            is_read: 1,
-            delivered: 1,
-            read_at: msg.read_at || new Date().toISOString(),
-          };
-        }
-
-        return { ...msg };
-      });
-
-      return {
-        ...state,
-        conversations: {
-          ...state.conversations,
-          [otherUserId]: updated,
-        },
-        unread: {
-          ...state.unread,
-          [otherUserId]: 0,
-        },
-      };
-    }
 
     case CHAT_CLEAR:
       return initialState;
@@ -335,42 +251,18 @@ case CHAT_MESSAGE_ADD: {
         activeUser: null,
       };
 
-// case CHAT_MESSAGE_DELIVERED: {
-//   const { messageId } = action.payload;
-
-//   const conversations = {};
-
-//   for (const uid in state.conversations) {
-//     conversations[uid] = state.conversations[uid].map(m => {
-//       const msg = m.message ?? m;
-
-//       if (msg.message_id === messageId) {
-//         return {
-//           ...msg,
-//           delivered: 1,
-//         };
-//       }
-
-//       return msg;
-//     });
-//   }
-
-//   return {
-//     ...state,
-//     conversations,
-//   };
-// }
-      
-case CHAT_MESSAGE_DELIVERED: {
+   case 'CHAT_MESSAGE_DELIVERED': {
   const { messageId } = action.payload;
 
+  let hasChanged = false;
   const conversations = {};
 
   for (const uid in state.conversations) {
     conversations[uid] = state.conversations[uid].map(m => {
       const msg = m.message ?? m;
 
-      if (String(msg.message_id) === String(messageId)) {
+      if (String(msg.message_id) === String(messageId) && !msg.delivered) {
+        hasChanged = true;
         return {
           ...msg,
           delivered: 1,
@@ -380,6 +272,9 @@ case CHAT_MESSAGE_DELIVERED: {
       return msg;
     });
   }
+
+  // 🔥 VERY IMPORTANT
+  if (!hasChanged) return state;
 
   return {
     ...state,

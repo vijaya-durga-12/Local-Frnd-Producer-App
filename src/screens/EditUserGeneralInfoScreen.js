@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import {
 import { languageApiFetchRequest } from "../features/language/languageAction";
 import { newUserDataRequest } from "../features/user/userAction";
 import { Dimensions } from "react-native";
+import { RESET_USER_STATE } from "../features/user/userType";
 
 const { width, height } = Dimensions.get("window");
 
@@ -34,9 +35,7 @@ const EditUserGeneralInfoScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const dispatch = useDispatch();
-const { message: apiMessage, userDataResponse } = useSelector(
-  (state) => state.user
-);
+const { userDataResponse } = useSelector(state => state.user);
 
   /* ===== PARAMS ===== */
   const { locationIds = {}, language = "" } = route.params || {};
@@ -53,7 +52,7 @@ const { message: apiMessage, userDataResponse } = useSelector(
   const [openCity, setOpenCity] = useState(false);
 
   const [query, setQuery] = useState("");
-const [isResponseHandled, setIsResponseHandled] = useState(false);
+const isResponseHandled = useRef(false);
 const [isSubmitting, setIsSubmitting] = useState(false);
 
   /* ===== REDUX ===== */
@@ -127,42 +126,41 @@ const [isSubmitting, setIsSubmitting] = useState(false);
 
   dispatch(newUserDataRequest(payload));
 };
+// ✅ Alert effect
 useEffect(() => {
-  if (!userDataResponse || isResponseHandled) return;
+  if (!userDataResponse || isResponseHandled.current) return; // ✅ .current
 
   const isSuccess = userDataResponse?.success === true;
-
-  // Make sure message is STRING
   const safeMessage =
-    typeof userDataResponse?.message === "string"
+    typeof userDataResponse?.message === 'string'
       ? userDataResponse.message
-      : "Operation completed";
+      : isSuccess
+      ? 'Updated successfully!'
+      : 'Something went wrong';
 
   setIsSubmitting(false);
-  setIsResponseHandled(true);
+  isResponseHandled.current = true;
 
   Alert.alert(
-    isSuccess ? "Success ✅" : "Error ❌",
+    isSuccess ? 'Success ✅' : 'Error ❌',
     safeMessage,
-    [
-      {
-        text: "OK",
-        onPress: () => {
-          if (isSuccess) {
-            navigation.navigate("EditProfileScreen");
-          }
-        },
+    [{
+      text: 'OK',
+      onPress: () => {
+        dispatch({ type: RESET_USER_STATE }); // ✅ clear first
+        if (isSuccess) {
+          navigation.navigate('EditProfileScreen'); // ✅ then navigate
+        }
       },
-    ]
+    }]
   );
-}, [userDataResponse, isResponseHandled]);
+}, [userDataResponse]); // ✅ no isResponseHandled in deps
 
-
+// ✅ Focus listener — only reset ref, NO dispatch
 useEffect(() => {
-  const unsubscribe = navigation.addListener("focus", () => {
-    setIsResponseHandled(false);
+  const unsubscribe = navigation.addListener('focus', () => {
+    isResponseHandled.current = false; // ✅ only this
   });
-
   return unsubscribe;
 }, [navigation]);
 
