@@ -7,6 +7,10 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import {
   useNavigation,
@@ -28,38 +32,30 @@ import {
 import { languageApiFetchRequest } from '../features/language/languageAction';
 import WelcomeScreenbackgroungpage from '../components/BackgroundPages/WelcomeScreenbackgroungpage';
 import { newUserDataRequest } from '../features/user/userAction';
+import { RESET_USER_STATE } from '../features/user/userType';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Alert } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker';
 import { userdeletephotorequest } from '../features/photo/photoAction';
 import ContinueButton from '../components/Common/ContinueButton';
-/* ================================================= */
-import { Dimensions } from 'react-native';
-import { KeyboardAvoidingView, Platform } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
-
-// Responsive helpers
 const wp = percent => (width * percent) / 100;
 const hp = percent => (height * percent) / 100;
+
 const EditProfileScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const dispatch = useDispatch();
 
-  /* ===== REDUX ===== */
-  const { userdata } = useSelector(state => state.user);
-  const { success, message, error } = useSelector(state => state.user);
-  /* ===== BASIC INFO ===== */
+  // ✅ HOOK 1 — selector (always first, never conditional)
+  const { userdata, userDataResponse } = useSelector(state => state.user);
 
+  // ✅ HOOK 2-14 — all useState in fixed order
   const [profileImg, setProfileImg] = useState(null);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [dob, setDob] = useState('');
-  const [gender, setGender] = useState('female');
-
-  /* ===== GENERAL INFO ===== */
+  const [gender, setGender] = useState('Female');
   const [language, setLanguage] = useState('');
   const [locationText, setLocationText] = useState('');
   const [locationIds, setLocationIds] = useState({
@@ -67,16 +63,116 @@ const EditProfileScreen = () => {
     state_id: null,
     country_id: null,
   });
-
-  /* ===== LIFESTYLE / INTEREST ===== */
   const [selectedLifestyles, setSelectedLifestyles] = useState([]);
   const [selectedInterests, setSelectedInterests] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  /* ===== ACCORDION ===== */
   const [openSection, setOpenSection] = useState(null);
+const isResponseHandled = useRef(false);
 
-  /* ===== IMAGE PICKER ===== */
+  // ✅ HOOK 15 — useRef
+  const isFormInitialized = useRef(false);
+
+  // ✅ HOOK 16 — initial API load
+  useEffect(() => {
+    dispatch(languageApiFetchRequest());
+    dispatch(fetchInterestsRequest());
+    dispatch({ type: FETCH_LIFESTYLE_REQUEST });
+    dispatch({ type: FETCH_LIFESTYLE_OPTIONS_REQUEST });
+  }, []);
+
+// ✅ HOOK 17 — focus listener — NO dispatch, only reset ref
+useEffect(() => {
+  const unsubscribe = navigation.addListener('focus', () => {
+    isFormInitialized.current = false;
+    isResponseHandled.current = false; // ✅ only reset ref
+    // ❌ REMOVE dispatch(RESET_USER_STATE) — this was wiping userDataResponse
+  });
+  return unsubscribe;
+}, [navigation]);
+
+// ✅ HOOK 18 — alert effect — clear Redux only AFTER user taps OK
+useEffect(() => {
+  if (!userDataResponse || isResponseHandled.current) return; // ✅ .current fixed
+
+  const isSuccess = userDataResponse?.success === true;
+  const safeMessage =
+    typeof userDataResponse?.message === 'string'
+      ? userDataResponse.message
+      : isSuccess
+      ? 'Profile updated successfully!'
+      : 'Something went wrong';
+
+  isResponseHandled.current = true;
+
+  Alert.alert(
+    isSuccess ? 'Success ✅' : 'Error ❌',
+    safeMessage,
+    [{
+      text: 'OK',
+      onPress: () => {
+        dispatch({ type: RESET_USER_STATE }); // ✅ clear ONLY after OK tap
+      },
+    }]
+  );
+}, [userDataResponse]); // ✅ removed isResponseHandled from deps — it's a ref
+
+  // ✅ HOOK 19 — form prefill on focus (useFocusEffect always last)
+  useFocusEffect(
+    useCallback(() => {
+      if (!userdata) return;
+
+      setProfileImg(userdata?.images?.avatar ?? null);
+      setFullName(userdata?.user?.name ?? '');
+      setUsername(userdata?.user?.username ?? '');
+      setEmail(userdata?.user?.email ?? '');
+      setDob(formatDateForApi(userdata?.user?.date_of_birth));
+      setGender(userdata?.user?.gender ?? 'Female');
+      setLanguage(userdata?.language?.native_name ?? '');
+
+      const city = userdata?.location?.city;
+      const state = userdata?.location?.state;
+      const country = userdata?.location?.country;
+
+      setLocationIds({
+        city_id: city?.id ?? null,
+        state_id: state?.id ?? null,
+        country_id: country?.id ?? null,
+      });
+
+      setLocationText(
+        `${city?.name ?? ''}, ${state?.name ?? ''}, ${country?.name ?? ''}`,
+      );
+
+      if (userdata?.lifestyles?.length) {
+        setSelectedLifestyles(
+          userdata.lifestyles.map(item => ({
+            categoryId: item.category.id,
+            categoryName: item.category.name,
+            id: item.subcategory.id,
+            name: item.subcategory.name,
+          })),
+        );
+      }
+
+      if (userdata?.interests?.length) {
+        setSelectedInterests(userdata.interests);
+      }
+
+      isFormInitialized.current = true;
+    }, [userdata]),
+  );
+
+  // ✅ Regular functions — AFTER all hooks
+  const formatDateForApi = date => {
+    if (!date) return '';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '';
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const pickImage = () => {
     Alert.alert(
       'Select Option',
@@ -104,99 +200,6 @@ const EditProfileScreen = () => {
     );
   };
 
-  /* ===== INITIAL API LOAD ===== */
-  useEffect(() => {
-    dispatch(languageApiFetchRequest());
-    dispatch(fetchInterestsRequest());
-    // dispatch(newUserDataRequest())
-    dispatch({ type: FETCH_LIFESTYLE_REQUEST });
-    dispatch({ type: FETCH_LIFESTYLE_OPTIONS_REQUEST });
-  }, []);
-  const formatDateForApi = date => {
-    if (!date) return '';
-
-    const d = new Date(date);
-    if (isNaN(d.getTime())) return '';
-
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`; // YYYY-MM-DD
-  };
-
-  /* ================= REFRESH FIX ================= */
-  const isFormInitialized = useRef(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!userdata) return;
-      console.log('🟢 Initializing EditProfile form');
-
-      // BASIC INFO (ONLY ONCE)
-      setProfileImg(userdata?.images?.avatar ?? null);
-      setFullName(userdata?.user?.name ?? '');
-      setUsername(userdata?.user?.username ?? '');
-      setEmail(userdata?.user?.email ?? '');
-      setDob(formatDateForApi(userdata?.user?.date_of_birth));
-      setGender(userdata?.user?.gender ?? 'Female');
-
-      // LANGUAGE
-      setLanguage(userdata?.language?.native_name ?? '');
-
-      // LOCATION
-      const city = userdata?.location?.city;
-      const state = userdata?.location?.state;
-      const country = userdata?.location?.country;
-
-      setLocationIds({
-        city_id: city?.id ?? null,
-        state_id: state?.id ?? null,
-        country_id: country?.id ?? null,
-      });
-
-      setLocationText(
-        `${city?.name ?? ''}, ${state?.name ?? ''}, ${country?.name ?? ''}`,
-      );
-
-      // LIFESTYLES
-      if (userdata?.lifestyles?.length) {
-        setSelectedLifestyles(
-          userdata.lifestyles.map(item => ({
-            categoryId: item.category.id,
-            categoryName: item.category.name,
-            id: item.subcategory.id,
-            name: item.subcategory.name,
-          })),
-        );
-      }
-
-      // INTERESTS
-      if (userdata?.interests?.length) {
-        setSelectedInterests(userdata.interests);
-      }
-
-      isFormInitialized.current = true; // 🔒 LOCK IT
-    }, [userdata]),
-  );
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      isFormInitialized.current = false; // 🔥 allow refresh
-    });
-
-    return unsubscribe;
-  }, [navigation]);
-
-  const onDateChange = (event, selectedDate) => {
-    setShowDatePicker(false);
-
-    if (selectedDate) {
-      setDob(formatDateForApi(selectedDate));
-    }
-  };
-
-  /* ===== NAVIGATION ===== */
   const openGeneralInfo = () => {
     navigation.navigate('EditUserGeneralInfoScreen', {
       language,
@@ -207,14 +210,9 @@ const EditProfileScreen = () => {
     if (userdata?.location?.country?.id) {
       dispatch(fetchStatesRequest(userdata.location.country.id));
     }
-
     if (userdata?.location?.state?.id) {
       dispatch(fetchCitiesRequest(userdata.location.state.id));
     }
-
-    // if (userdata?.language?.id) {
-    //   dispatch(newUserDataRequest({ language_id: userdata.language.id }));
-    // }
   };
 
   const openLifestyle = () => {
@@ -231,43 +229,16 @@ const EditProfileScreen = () => {
       date_of_birth: formatDateForApi(dob),
       gender: gender?.toLowerCase() === 'male' ? 'Male' : 'Female',
     };
-
-    console.log('✅ PROFILE UPDATE PAYLOAD', payload);
-
-    // 🔥 DISPATCH API CALL
     dispatch(newUserDataRequest(payload));
   };
-  const [isResponseHandled, setIsResponseHandled] = useState(false);
 
-  useEffect(() => {
-    if (!success && !error) return;
-
-    let errorMessage = '';
-
-    if (error?.message) {
-      errorMessage = error.message;
-    } else if (error?.errors) {
-      // 🔥 handle field errors
-      errorMessage = Object.values(error.errors).flat().join('\n');
-    } else if (message) {
-      errorMessage = message;
+  const onDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setDob(formatDateForApi(selectedDate));
     }
+  };
 
-    Alert.alert(
-      success ? 'Success ✅' : 'Error ❌',
-      errorMessage || 'Something went wrong',
-    );
-  }, [success, error]);
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      setIsResponseHandled(false);
-    });
-
-    return unsubscribe;
-  }, [navigation]);
-
-  const interestText = selectedInterests.map(i => i.name).join(', ');
   const handleDeleteImage = photo_id => {
     Alert.alert('Delete Photo', 'Are you sure?', [
       { text: 'Cancel' },
@@ -278,15 +249,14 @@ const EditProfileScreen = () => {
           dispatch(
             userdeletephotorequest({ photo_id }, () => {
               console.log('✅ Deleted');
-
-              // 👇 force refresh screen
-              ({ refresh: Date.now() });
             }),
           );
         },
       },
     ]);
   };
+
+  const interestText = selectedInterests.map(i => i.name).join(', ');
 
   return (
     <WelcomeScreenbackgroungpage>
@@ -337,7 +307,6 @@ const EditProfileScreen = () => {
               <Input value={email} onChange={setEmail} />
 
               <Text style={styles.label}>Date Of Birth</Text>
-
               <TouchableOpacity
                 style={styles.inputBox}
                 onPress={() => setShowDatePicker(true)}
@@ -353,7 +322,7 @@ const EditProfileScreen = () => {
                   value={dob ? new Date(dob) : new Date()}
                   mode="date"
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  maximumDate={new Date()} // no future dates
+                  maximumDate={new Date()}
                   onChange={onDateChange}
                 />
               )}
@@ -371,7 +340,6 @@ const EditProfileScreen = () => {
                 openSection={openSection}
                 setOpenSection={setOpenSection}
               />
-
               {openSection === 'general' && (
                 <View style={styles.generalContainer}>
                   <Text style={styles.label}>Language</Text>
@@ -433,7 +401,6 @@ const EditProfileScreen = () => {
                 openSection={openSection}
                 setOpenSection={setOpenSection}
               />
-
               {openSection === 'lifestyle' && (
                 <View style={styles.generalContainer}>
                   {userdata?.lifestyles && userdata.lifestyles.length > 0 ? (
@@ -454,7 +421,6 @@ const EditProfileScreen = () => {
                       <Text style={styles.emptyText}>
                         No lifestyle available
                       </Text>
-
                       <TouchableOpacity
                         style={styles.addNowBtn}
                         onPress={openLifestyle}
@@ -473,7 +439,6 @@ const EditProfileScreen = () => {
                 openSection={openSection}
                 setOpenSection={setOpenSection}
               />
-
               {openSection === 'interest' && (
                 <TouchableOpacity
                   style={styles.inputBox}
@@ -502,7 +467,6 @@ const EditProfileScreen = () => {
                   <View style={styles.galleryGrid}>
                     {Array.from({ length: 4 }).map((_, index) => {
                       const image = userdata?.images?.gallery?.[index];
-
                       if (image) {
                         return (
                           <View key={image.photo_id} style={styles.galleryItem}>
@@ -518,15 +482,8 @@ const EditProfileScreen = () => {
                               <Image
                                 source={{ uri: image.photo_url }}
                                 style={styles.galleryImage}
-                                onError={e =>
-                                  console.log(
-                                    '❌ Image load failed:',
-                                    e.nativeEvent,
-                                  )
-                                }
                               />
                             </TouchableOpacity>
-
                             <TouchableOpacity
                               style={styles.deleteBtn}
                               onPress={() => handleDeleteImage(image.photo_id)}
@@ -536,7 +493,6 @@ const EditProfileScreen = () => {
                           </View>
                         );
                       }
-
                       return (
                         <TouchableOpacity
                           key={index}
@@ -559,6 +515,7 @@ const EditProfileScreen = () => {
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
+
       <View style={styles.bottomFixed}>
         <ContinueButton title="SAVE" onPress={handleSave} />
       </View>
@@ -572,16 +529,9 @@ export default EditProfileScreen;
 
 const Input = ({ value, onChange, placeholder }) => {
   const [isFocused, setIsFocused] = useState(false);
-
   const isActive = isFocused || value?.length > 0;
-
   return (
-    <View
-      style={[
-        styles.inputBox,
-        isActive && styles.inputActive, // 🔥 highlight
-      ]}
-    >
+    <View style={[styles.inputBox, isActive && styles.inputActive]}>
       <TextInput
         value={value}
         onChangeText={onChange}
@@ -596,27 +546,19 @@ const Input = ({ value, onChange, placeholder }) => {
 };
 
 const Gender = ({ label, value, setValue }) => {
-  // disable opposite gender
   const isDisabled =
     (value === 'Male' && label === 'Female') ||
     (value === 'Female' && label === 'Male');
-
   return (
     <TouchableOpacity
-      style={[
-        styles.genderItem,
-        isDisabled && { opacity: 0.4 }, // disabled effect
-      ]}
+      style={[styles.genderItem, isDisabled && { opacity: 0.4 }]}
       disabled={isDisabled}
       onPress={() => setValue(label)}
     >
       <View style={[styles.radio, value === label && styles.radioActive]}>
         {value === label && <View style={styles.radioDot} />}
       </View>
-
-      <Text style={{ color: isDisabled ? '#999' : '#000' }}>
-        {label}
-      </Text>
+      <Text style={{ color: isDisabled ? '#999' : '#000' }}>{label}</Text>
     </TouchableOpacity>
   );
 };
@@ -656,18 +598,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingVertical: hp(2),
   },
-
-  headerTitle: {
-    fontSize: wp(5),
-    fontWeight: '600',
-    marginLeft: wp(2),
-  },
-
-  avatarSection: {
-    alignItems: 'center',
-    marginVertical: hp(3),
-  },
-
+  headerTitle: { fontSize: wp(5), fontWeight: '600', marginLeft: wp(2) },
+  avatarSection: { alignItems: 'center', marginVertical: hp(3) },
   avatarRing: {
     width: wp(30),
     height: wp(30),
@@ -677,16 +609,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  avatar: {
-    width: wp(22),
-    height: wp(22),
-    borderRadius: wp(11),
-  },
+  avatar: { width: wp(22), height: wp(22), borderRadius: wp(11) },
   inputActive: {
-    borderColor: '#B832F9', // 🔥 your purple
+    borderColor: '#B832F9',
     borderWidth: 1.5,
-    backgroundColor: '#fff', // optional (clean look)
+    backgroundColor: '#fff',
   },
   cameraBtn: {
     position: 'absolute',
@@ -699,18 +626,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  form: {
-    paddingHorizontal: wp(5),
-  },
-
+  form: { paddingHorizontal: wp(5) },
   label: {
     marginTop: hp(1.8),
     marginBottom: hp(0.8),
     color: '#444',
     fontSize: wp(3.8),
   },
-
   inputBox: {
     backgroundColor: '#FAFAFA',
     borderRadius: 28,
@@ -721,23 +643,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#eee',
   },
-
-  input: {
-    flex: 1,
-    fontSize: wp(4),
-  },
-
-  genderRow: {
-    flexDirection: 'row',
-    marginTop: hp(1),
-  },
-
+  input: { flex: 1, fontSize: wp(4) },
+  genderRow: { flexDirection: 'row', marginTop: hp(1) },
   genderItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: wp(6),
   },
-
   radio: {
     width: wp(4.5),
     height: wp(4.5),
@@ -746,11 +658,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     marginRight: wp(2),
   },
-
-  radioActive: {
-    borderColor: PURPLE,
-  },
-
+  radioActive: { borderColor: PURPLE },
   radioDot: {
     width: wp(2),
     height: wp(2),
@@ -759,7 +667,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 3,
   },
-
   accordionRow: {
     marginTop: hp(3),
     paddingVertical: hp(1.8),
@@ -768,12 +675,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-
-  accordionTitle: {
-    fontSize: wp(4),
-    fontWeight: '600',
-  },
-
+  accordionTitle: { fontSize: wp(4), fontWeight: '600' },
   accordionArrow: {
     width: wp(6),
     height: wp(6),
@@ -782,11 +684,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  generalContainer: {
-    marginTop: hp(1.5),
-  },
-
+  generalContainer: { marginTop: hp(1.5) },
   selectInput: {
     minHeight: hp(6),
     backgroundColor: '#FAFAFA',
@@ -799,25 +697,14 @@ const styles = StyleSheet.create({
     borderColor: '#eee',
     marginBottom: hp(1.5),
   },
-
-  sectionTitle: {
-    marginTop: hp(3),
-    marginBottom: hp(1.5),
-    fontSize: wp(4),
-    fontWeight: '600',
-  },
-
-  /* ===== GALLERY ===== */
-
   galleryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-
   galleryItem: {
     width: wp(44),
-    height: wp(44), // square
+    height: wp(44),
     borderRadius: 16,
     marginBottom: hp(1.5),
     backgroundColor: '#F2F2F2',
@@ -825,24 +712,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  galleryImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-
-  emptyGallery: {
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#ccc',
-  },
-
-  galleryTouch: {
-    width: '100%',
-    height: '100%',
-  },
-
+  galleryImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  emptyGallery: { borderWidth: 1, borderStyle: 'dashed', borderColor: '#ccc' },
+  galleryTouch: { width: '100%', height: '100%' },
   deleteBtn: {
     position: 'absolute',
     top: hp(1),
@@ -854,43 +726,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  emptyLifestyleBox: {
-    alignItems: 'center',
-    paddingVertical: hp(3),
-  },
-
-  emptyText: {
-    color: '#999',
-    marginBottom: hp(1.2),
-    fontSize: wp(3.5),
-  },
-
+  emptyLifestyleBox: { alignItems: 'center', paddingVertical: hp(3) },
+  emptyText: { color: '#999', marginBottom: hp(1.2), fontSize: wp(3.5) },
   addNowBtn: {
     paddingHorizontal: wp(6),
     paddingVertical: hp(1),
     borderRadius: 20,
     backgroundColor: PURPLE,
   },
-
-  addNowText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: wp(3.8),
-  },
-  scrollContent: {
-    paddingBottom: hp(10), // 🔥 pushes content above button
-  },
-
+  addNowText: { color: '#fff', fontWeight: '600', fontSize: wp(3.8) },
+  scrollContent: { paddingBottom: hp(10) },
   bottomFixed: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     paddingVertical: hp(1.5),
-    backgroundColor: '#fff', // 🔥 prevents background showing
+    backgroundColor: '#fff',
     alignItems: 'center',
-
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowRadius: 5,

@@ -150,6 +150,8 @@ const ChatScreen = ({ route, navigation }) => {
 
   const flatRef = useRef(null);
   const audioRecorderRef = useRef(null);
+  const hasMarkedRead = useRef(false);
+
 
   const [isRecording, setIsRecording] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -200,60 +202,52 @@ const ChatScreen = ({ route, navigation }) => {
     };
   }, [dispatch, userId]);
 
-  useEffect(() => {
-    if (!userId) return;
-    dispatch(chatHistoryRequest(userId));
-  }, [dispatch, userId]);
+ useEffect(() => {
+  if (!userId) return;
+  dispatch(chatHistoryRequest(userId));
+}, [userId]);
 
-  useEffect(() => {
-    if (!conversationId) return;
+useEffect(() => {
+  if (!conversationId) return;
 
-    socketRef.current?.emit('chat_read_all', {
-      conversationId,
-    });
-  }, [conversationId, socketRef]);
+  socketRef.current?.emit('chat_read_all', {
+    conversationId,
+  });
+}, [conversationId]);
 
   
 
   useEffect(() => {
-    if (!userId) return;
-    dispatch(chatUnreadClear(userId));
-  }, [dispatch, userId]);
+  if (!userId) return;
+  dispatch(chatUnreadClear(userId));
+}, [userId]);
 
-  useEffect(() => {
-    if (!userId || !myId) return;
-
-    socketRef.current?.emit('chat_open', {
-      userId: myId,
-      chattingWith: userId,
-    });
-
-    return () => {
-      socketRef.current?.emit('chat_close', {
-        userId: myId,
-      });
-    };
-  }, [myId, userId, socketRef]);
-
-  useEffect(() => {
-    flatRef.current?.scrollToEnd({ animated: true });
-  }, [messages]);
-
-
- 
-
-// ✅ ADD THIS HERE
 useEffect(() => {
-  if (!messages.length || !myId) return;
+  if (!userId || !myId) return;
 
-  messages.forEach(msg => {
-    if (Number(msg.sender_id) !== Number(myId)) {
-      socketRef.current?.emit("chat_read", {
-        messageId: msg.message_id
-      });
-    }
+  socketRef.current?.emit('chat_open', {
+    userId: myId,
+    chattingWith: userId,
   });
+
+  return () => {
+    socketRef.current?.emit('chat_close', {
+      userId: myId,
+    });
+  };
+}, [myId, userId, socketRef]);
+
+
+
+
+ useEffect(() => {
+  setTimeout(() => {
+    flatRef.current?.scrollToEnd({ animated: true });
+  }, 100);
 }, [messages]);
+
+
+
   const messagesWithDate = useMemo(() => {
     const map = new Map();
 
