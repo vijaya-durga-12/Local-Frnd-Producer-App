@@ -12,9 +12,6 @@ import PhoneScreen from './src/screens/PhoneScreen';
 import OtpScreen from './src/screens/OtpScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import GenderScreen from './src/screens/GenderScreen';
-import UserScreen from './src/screens/UserScreen';
-import DobGenderScreen from './src/screens/DateofBirth';
-import LocationScreen from './src/screens/LocationScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import PlanScreen from './src/screens/PlansScreen';
 import UplodePhotoScreen from './src/screens/UplodePhotoScreen';
@@ -24,7 +21,6 @@ import GirlsavatarScreen from './src/screens/GirlsavatarScreen';
 import BoysavatarScreen from './src/screens/BoysavatarScreen';
 import ChoosePlanScreen from './src/screens/ChoosePlanScreen';
 import OnboardScreen from './src/screens/OnboardScreen';
-import LanguageScreen from './src/screens/LanguageScreen';
 import ReciverHomeScreen from './src/screens/ReciverHomeScreen';
 import WelcomeScreen02 from './src/screens/WelcomeScreen02';
 import WelcomeScreen03 from './src/screens/WelcomeScreen03';
@@ -198,10 +194,6 @@ function MainNavigator({ navigationRef, isNavReady }) {
       />
       <Stack.Screen name="HelpCenterScreen" component={HelpCenterScreen} />
 
-      {/* <Stack.Screen name="DateofBirth" component={DobGenderScreen} />
-      <Stack.Screen name="UserScreen" component={UserScreen} />
-      <Stack.Screen name="LocationScreen" component={LocationScreen} />
-      <Stack.Screen name="LanguageScreen" component={LanguageScreen} /> */}
     </Stack.Navigator>
   );
 }
