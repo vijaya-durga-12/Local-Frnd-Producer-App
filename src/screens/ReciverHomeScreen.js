@@ -1,10 +1,11 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
   View,
   FlatList,
   TextInput,
   StyleSheet,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -19,21 +20,33 @@ import WelcomeScreenbackgroungpage from '../components/BackgroundPages/WelcomeSc
 
 import { userDatarequest } from '../features/user/userAction';
 import { fetchUnreadCount } from '../features/notification/notificationAction';
-import coinImg from '../assets/ring.png';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-// 🔥 scale helper
 const scale = size => (width / 375) * size;
 
 const ReciverHomeScreen = ({ navigation }) => {
   const dispatch = useDispatch();
+
+  const [refreshing, setRefreshing] = useState(false);
+
   const { userdata } = useSelector(state => state.user);
   const unread = useSelector(state => state.notification.unread);
 
   useEffect(() => {
     dispatch(userDatarequest());
     dispatch(fetchUnreadCount());
+  }, [dispatch]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+
+    dispatch(userDatarequest());
+    dispatch(fetchUnreadCount());
+
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
   }, [dispatch]);
 
   const coins = userdata?.user?.rings_balance ?? 0;
@@ -84,21 +97,27 @@ const ReciverHomeScreen = ({ navigation }) => {
           />
         </View>
 
-        {/* 🔥 SEARCH */}
         <View style={styles.searchWrapper}>
           <Icon name="search-outline" size={scale(18)} color="#999" />
           <TextInput placeholder="Search" style={styles.input} />
         </View>
 
-        {/* 🔥 CONTENT */}
         <FlatList
           data={sections}
           keyExtractor={item => item.id}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingBottom: scale(90), 
+            paddingBottom: scale(90),
           }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#D51BF9']}
+              tintColor="#D51BF9"
+            />
+          }
         />
       </View>
     </WelcomeScreenbackgroungpage>
@@ -120,8 +139,9 @@ const styles = StyleSheet.create({
     borderColor: '#D51BF9',
     borderRadius: scale(12),
   },
+
   headerContainer: {
-    paddingHorizontal: scale(16), // ✅ SAME as wallet
+    paddingHorizontal: scale(16),
   },
 
   input: {

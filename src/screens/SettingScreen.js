@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Modal,
   ScrollView,
   Dimensions,
@@ -25,183 +24,219 @@ const SettingScreen = () => {
   const { socketRef } = useContext(SocketContext);
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  /* ================= LOGOUT ================= */
-  const handleConfirmLogout = async () => {
-    setShowLogoutModal(false);
+  const clearUserSession = async () => {
     socketRef?.current?.disconnect();
+
     await AsyncStorage.multiRemove(["twittoke", "user_id"]);
+
     dispatch(userlogoutrequest());
+
     navigation.reset({
       index: 0,
       routes: [{ name: "Phone" }],
     });
   };
 
- return (
-  <WelcomeScreenbackgroungpage>
-    <View style={styles.container}>
+  const handleConfirmLogout = async () => {
+    setShowLogoutModal(false);
+    await clearUserSession();
+  };
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContainer}
-      >
+  const handleDeleteAccount = async () => {
+    setShowDeleteModal(false);
 
-        {/* HEADER */}
-        <View style={styles.header}>
-          <Icon
-            name="arrow-back"
-            size={22}
-            onPress={() => navigation.goBack()}
-          />
-          <Text style={styles.headerTitle}>Settings</Text>
-        </View>
+    /*
+      Add your permanent delete account API here.
 
-        {/* LIST */}
-        <View style={styles.listBox}>
-          <Item icon="person-outline" title="Personal Information" />
-          <Item icon="shield-checkmark-outline" title="Privacy & Permission" />
-          <Item icon="notifications-outline" title="Notification" />
-          <Item icon="lock-closed-outline" title="Security" />
-          <Item icon="server-outline" title="Data & Storage" />
-          <Item icon="chatbox-ellipses-outline" title="Feedback" />
-          <Item icon="language-outline" title="Language" />
-          <Item icon="information-circle-outline" title="About lokal frnd" />
-        </View>
+      Example:
+      const token = await AsyncStorage.getItem("twittoke");
 
-        {/* LOGOUT */}
-        <TouchableOpacity
-          style={styles.logoutItem}
-          onPress={() => setShowLogoutModal(true)}
+      await fetch("YOUR_DELETE_ACCOUNT_API_URL", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+    */
+
+    await clearUserSession();
+  };
+
+  return (
+    <WelcomeScreenbackgroungpage>
+      <View style={styles.container}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContainer}
         >
-          <View style={styles.logoutIcon}>
-            <Icon name="log-out-outline" size={20} color="#fff" />
+          {/* HEADER */}
+          <View style={styles.header}>
+            <Icon
+              name="arrow-back"
+              size={22}
+              color="#000"
+              onPress={() => navigation.goBack()}
+            />
+
+            <Text style={styles.headerTitle}>Settings</Text>
           </View>
-          <Text style={styles.logoutText}>Log Out</Text>
-          <Icon name="chevron-forward" size={18} color="#aaa" />
-        </TouchableOpacity>
 
-      </ScrollView>
 
-      {/* MODAL */}
-      <Modal transparent visible={showLogoutModal} animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-
-            <View style={styles.modalIcon}>
-              <Icon name="person-outline" size={24} color="#fff" />
+          
+          {/* DELETE ACCOUNT BUTTON */}
+          <TouchableOpacity
+            style={styles.deleteItem}
+            onPress={() => setShowDeleteModal(true)}
+            activeOpacity={0.8}
+          >
+            <View style={styles.deleteIcon}>
+              <Icon name="trash-outline" size={20} color="#fff" />
             </View>
 
-            <Text style={styles.modalTitle}>Logout?</Text>
-            <Text style={styles.modalSub}>
-              Are you sure you want to logout?
-            </Text>
+            <Text style={styles.deleteText}>Delete Account</Text>
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => setShowLogoutModal(false)}
-              >
-                <Text style={styles.cancelText}>CANCEL</Text>
-              </TouchableOpacity>
+            <Icon name="chevron-forward" size={18} color="#aaa" />
+          </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.confirmBtn}
-                onPress={handleConfirmLogout}
-              >
-                <Text style={styles.confirmText}>CONFIRM</Text>
-              </TouchableOpacity>
+          {/* LOGOUT BUTTON */}
+          <TouchableOpacity
+            style={styles.logoutItem}
+            onPress={() => setShowLogoutModal(true)}
+            activeOpacity={0.8}
+          >
+            <View style={styles.logoutIcon}>
+              <Icon name="log-out-outline" size={20} color="#fff" />
             </View>
 
-          </View>
-        </View>
-      </Modal>
+            <Text style={styles.logoutText}>Log Out</Text>
 
-    </View>
-  </WelcomeScreenbackgroungpage>
-);
+            <Icon name="chevron-forward" size={18} color="#aaa" />
+          </TouchableOpacity>
+
+        </ScrollView>
+
+        {/* LOGOUT MODAL */}
+        <Modal
+          transparent
+          visible={showLogoutModal}
+          animationType="fade"
+          onRequestClose={() => setShowLogoutModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalBox}>
+              <View style={styles.modalIcon}>
+                <Icon name="person-outline" size={24} color="#fff" />
+              </View>
+
+              <Text style={styles.modalTitle}>Logout?</Text>
+
+              <Text style={styles.modalSub}>
+                Are you sure you want to logout?
+              </Text>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => setShowLogoutModal(false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.cancelText}>CANCEL</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.confirmBtn}
+                  onPress={handleConfirmLogout}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.confirmText}>CONFIRM</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* DELETE ACCOUNT MODAL */}
+        <Modal
+          transparent
+          visible={showDeleteModal}
+          animationType="fade"
+          onRequestClose={() => setShowDeleteModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalBox}>
+              <View style={styles.deleteModalIcon}>
+                <Icon name="trash-outline" size={24} color="#fff" />
+              </View>
+
+              <Text style={styles.modalTitle}>Delete Account?</Text>
+
+              <Text style={styles.modalSub}>
+                This will permanently delete your account. This action cannot be
+                undone.
+              </Text>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => setShowDeleteModal(false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.cancelText}>CANCEL</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.deleteConfirmBtn}
+                  onPress={handleDeleteAccount}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.confirmText}>DELETE</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </View>
+    </WelcomeScreenbackgroungpage>
+  );
 };
-
-/* ---------- REUSABLE ITEM ---------- */
-const Item = ({ icon, title }) => (
-  <TouchableOpacity style={styles.item}>
-    <View style={styles.iconCircle}>
-      <Icon name={icon} size={18} color="#fff" />
-    </View>
-    <Text style={styles.itemText}>{title}</Text>
-    <Icon name="chevron-forward" size={18} color="#aaa" />
-  </TouchableOpacity>
-);
 
 export default SettingScreen;
 
-/* ================= STYLES ================= */
 const styles = StyleSheet.create({
   container: {
-  flex: 1,
-  
-},
+    flex: 1,
+  },
 
-scrollContainer: {
-  flexGrow: 1,
-  paddingBottom: height * 0.05,
-},
-  /* HEADER */
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: height * 0.05,
+  },
+
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: height * 0.01,
+    marginBottom: 10,
+  },
+
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginLeft: 10,
+    color: "#000",
+  },
+logoutItem: {
   flexDirection: "row",
   alignItems: "center",
-  paddingHorizontal: 16,
-  paddingTop: height * 0.01, 
-  marginBottom: 10,
+  paddingVertical: 18,
+  paddingHorizontal: 20,
+  backgroundColor: "#fff",
+  marginTop: 25,
 },
-
-headerTitle: {
-  fontSize: 20,
-  fontWeight: "600",
-  marginLeft: 10,
-  color: '#000', // ✅ ADD
-},
-
-  /* LIST */
-  listBox: {
-    marginTop: 20,
-  },
-
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#eee",
-  },
-
-  iconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#C44DFF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 14,
-  },
-
-  itemText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: "500",
-    color: '#000', // ✅ ADD
-  },
-
-  /* LOGOUT ROW */
-  logoutItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    backgroundColor: "#fff",
-    marginTop: height * 0.1,
-  },
 
   logoutIcon: {
     width: 34,
@@ -217,10 +252,35 @@ headerTitle: {
     flex: 1,
     fontSize: 14,
     fontWeight: "500",
-    color: '#000', // ✅ ADD
+    color: "#000",
   },
 
-  /* MODAL */
+  deleteItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    backgroundColor: "#fff",
+    marginTop: 12,
+  },
+
+  deleteIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#FF3B30",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+
+  deleteText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#060101",
+  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
@@ -246,11 +306,21 @@ headerTitle: {
     marginBottom: 12,
   },
 
+  deleteModalIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#FF3B30",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+
   modalTitle: {
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 6,
-    color: '#000', // ✅ ADD
+    color: "#000",
   },
 
   modalSub: {
@@ -284,6 +354,14 @@ headerTitle: {
     paddingVertical: 12,
     borderRadius: 10,
     backgroundColor: "#C44DFF",
+    alignItems: "center",
+  },
+
+  deleteConfirmBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: "#FF3B30",
     alignItems: "center",
   },
 

@@ -148,7 +148,7 @@ const ProfileScreen = () => {
               color="#999"
               title="App Settings"
               sub="Manage your notifications, connected accounts.."
-              onPress={() => navigation.navigate('SettingScreen')}
+              onPress={() => navigation.navigate('AppsettingScreen')}
             />
 
             <Item
