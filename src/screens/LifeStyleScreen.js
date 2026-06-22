@@ -32,6 +32,7 @@ const RF = size => (width / 375) * size;
 
 const LifeStyleScreen = ({ navigation }) => {
   const scrollRef = useRef(null);
+  const dispatch = useDispatch();
 
   const [about, setAbout] = useState('');
   const [selectedChoices, setSelectedChoices] = useState({});
@@ -42,31 +43,22 @@ const LifeStyleScreen = ({ navigation }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResponseHandled, setIsResponseHandled] = useState(false);
 
-  const dispatch = useDispatch();
+  const { loading, data = [], options = [] } = useSelector(
+    state => state.lifestyle,
+  );
 
-  const {
-    loading,
-    data = [],
-    options = [],
-  } = useSelector(state => state.lifestyle);
-
-const apiResponse = useSelector(state => state.user.userDataResponse);
+  const apiResponse = useSelector(state => state.user.userDataResponse);
 
   useEffect(() => {
-    const showEvent =
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent =
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
-    const showSub = Keyboard.addListener(showEvent, e => {
-      setKeyboardHeight(e.endCoordinates?.height || 0);
+    const showSub = Keyboard.addListener('keyboardDidShow', e => {
+      setKeyboardHeight(e.endCoordinates.height);
 
       setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true });
-      }, 250);
+      }, 150);
     });
 
-    const hideSub = Keyboard.addListener(hideEvent, () => {
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
       setKeyboardHeight(0);
     });
 
@@ -95,7 +87,7 @@ const apiResponse = useSelector(state => state.user.userDataResponse);
   }, [dispatch]);
 
   useEffect(() => {
-    if (!apiResponse || isResponseHandled) return;
+    if (!isSubmitting || !apiResponse || isResponseHandled) return;
 
     setIsSubmitting(false);
     setIsResponseHandled(true);
@@ -114,11 +106,12 @@ const apiResponse = useSelector(state => state.user.userDataResponse);
         },
       ],
     );
-  }, [apiResponse, isResponseHandled, navigation]);
+  }, [apiResponse, isSubmitting, isResponseHandled, navigation]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       setIsResponseHandled(false);
+      setIsSubmitting(false);
     });
 
     return unsubscribe;
@@ -182,6 +175,7 @@ const apiResponse = useSelector(state => state.user.userDataResponse);
     }
 
     setIsSubmitting(true);
+    setIsResponseHandled(false);
 
     dispatch({
       type: USER_LIFESTYLE_REQUEST,
@@ -191,7 +185,11 @@ const apiResponse = useSelector(state => state.user.userDataResponse);
       },
     });
 
-    dispatch(newUserDataRequest({ bio: about }));
+    dispatch(
+      newUserDataRequest({
+        bio: about,
+      }),
+    );
   };
 
   return (
@@ -201,119 +199,144 @@ const apiResponse = useSelector(state => state.user.userDataResponse);
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
       >
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={[
-            styles.inner,
-            {
-              paddingBottom:
-                keyboardHeight > 0 ? keyboardHeight + 90 : height * 0.12,
-            },
-          ]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled={true}
-        >
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.headerRow}
-            activeOpacity={0.8}
+        <View style={styles.mainContainer}>
+          <ScrollView
+            ref={scrollRef}
+            style={styles.scrollView}
+            contentContainerStyle={[
+              styles.inner,
+              {
+                paddingBottom:
+                  keyboardHeight > 0 ? height * 0.16 : height * 0.035,
+              },
+            ]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            nestedScrollEnabled
           >
-            <Ionicons name="chevron-back" size={RF(22)} color="#111" />
-            <Text style={styles.header}>Life Style</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.headerRow}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="chevron-back" size={RF(22)} color="#111" />
+              <Text style={styles.header}>Life Style</Text>
+            </TouchableOpacity>
 
-          {loading ? (
-            <View style={styles.loaderWrapper}>
-              <ActivityIndicator size="large" color="#B03EF7" />
-              <Text style={styles.loadingText}>Loading lifestyle data...</Text>
-            </View>
-          ) : (
-            <>
-              {normalizedCategories.map(category => {
-                const relatedOptions = normalizedOptions.filter(
-                  opt => Number(opt.category_id) === Number(category.id),
-                );
-
-                const selectedName = getSelectedOptionName(category.id);
-                const isOpen = openDropdownId === category.id;
-
-                return (
-                  <View key={category.id} style={styles.card}>
-                    <Text style={styles.label}>{category.name}</Text>
-
-                    <TouchableOpacity
-                      style={[styles.dropdown, isOpen && styles.activeDropdown]}
-                      activeOpacity={0.8}
-                      onPress={() =>
-                        setOpenDropdownId(isOpen ? null : category.id)
-                      }
-                    >
-                      <Text
-                        style={[
-                          styles.dropdownText,
-                          !selectedName && styles.placeholderText,
-                        ]}
-                      >
-                        {selectedName || 'Select...'}
-                      </Text>
-
-                      <Ionicons
-                        name={isOpen ? 'chevron-up' : 'chevron-down'}
-                        size={RF(18)}
-                        color="#777"
-                      />
-                    </TouchableOpacity>
-
-                    {isOpen && (
-                      <ScrollView
-                        style={styles.dropdownList}
-                        nestedScrollEnabled={true}
-                        keyboardShouldPersistTaps="handled"
-                      >
-                        {relatedOptions.length > 0 ? (
-                          relatedOptions.map(opt => (
-                            <TouchableOpacity
-                              key={opt.id}
-                              style={styles.dropdownItem}
-                              activeOpacity={0.8}
-                              onPress={() => handleSelect(category.id, opt.id)}
-                            >
-                              <Text style={styles.dropdownItemText}>
-                                {opt.name}
-                              </Text>
-                            </TouchableOpacity>
-                          ))
-                        ) : (
-                          <View style={styles.dropdownItem}>
-                            <Text style={styles.noDataText}>
-                              No options found
-                            </Text>
-                          </View>
-                        )}
-                      </ScrollView>
-                    )}
-                  </View>
-                );
-              })}
-
-              <View style={styles.card}>
-                <Text style={styles.label}>About</Text>
-
-                <TextInput
-                  style={styles.textArea}
-                  placeholder="Type Here..."
-                  placeholderTextColor="#B5B5B5"
-                  multiline
-                  value={about}
-                  onChangeText={setAbout}
-                  onFocus={handleAboutFocus}
-                  textAlignVertical="top"
-                  returnKeyType="done"
-                  blurOnSubmit={false}
-                />
+            {loading ? (
+              <View style={styles.loaderWrapper}>
+                <ActivityIndicator size="large" color="#B03EF7" />
+                <Text style={styles.loadingText}>
+                  Loading lifestyle data...
+                </Text>
               </View>
+            ) : (
+              <>
+                {normalizedCategories.map(category => {
+                  const relatedOptions = normalizedOptions.filter(
+                    opt => Number(opt.category_id) === Number(category.id),
+                  );
 
+                  const selectedName = getSelectedOptionName(category.id);
+                  const isOpen = openDropdownId === category.id;
+
+                  return (
+                    <View key={category.id} style={styles.card}>
+                      <Text style={styles.label}>{category.name}</Text>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.dropdown,
+                          isOpen && styles.activeDropdown,
+                        ]}
+                        activeOpacity={0.8}
+                        onPress={() =>
+                          setOpenDropdownId(isOpen ? null : category.id)
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.dropdownText,
+                            !selectedName && styles.placeholderText,
+                          ]}
+                        >
+                          {selectedName || 'Select...'}
+                        </Text>
+
+                        <Ionicons
+                          name={isOpen ? 'chevron-up' : 'chevron-down'}
+                          size={RF(18)}
+                          color="#777"
+                        />
+                      </TouchableOpacity>
+
+                      {isOpen && (
+                        <ScrollView
+                          style={styles.dropdownList}
+                          nestedScrollEnabled
+                          keyboardShouldPersistTaps="handled"
+                        >
+                          {relatedOptions.length > 0 ? (
+                            relatedOptions.map(opt => (
+                              <TouchableOpacity
+                                key={opt.id}
+                                style={styles.dropdownItem}
+                                activeOpacity={0.8}
+                                onPress={() =>
+                                  handleSelect(category.id, opt.id)
+                                }
+                              >
+                                <Text style={styles.dropdownItemText}>
+                                  {opt.name}
+                                </Text>
+                              </TouchableOpacity>
+                            ))
+                          ) : (
+                            <View style={styles.dropdownItem}>
+                              <Text style={styles.noDataText}>
+                                No options found
+                              </Text>
+                            </View>
+                          )}
+                        </ScrollView>
+                      )}
+                    </View>
+                  );
+                })}
+
+                <View style={styles.card}>
+                  <Text style={styles.label}>About</Text>
+
+                  <TextInput
+                    style={styles.textArea}
+                    placeholder="Type Here..."
+                    placeholderTextColor="#B5B5B5"
+                    multiline
+                    value={about}
+                    onChangeText={setAbout}
+                    onFocus={handleAboutFocus}
+                    textAlignVertical="top"
+                    returnKeyType="done"
+                    blurOnSubmit={false}
+                  />
+                </View>
+              </>
+            )}
+          </ScrollView>
+
+          {!loading && (
+            <View
+              style={[
+                styles.footer,
+                {
+                  marginBottom:
+                    Platform.OS === 'android' && keyboardHeight > 0
+                      ? keyboardHeight
+                      : 0,
+                },
+              ]}
+            >
               <TouchableOpacity
                 style={styles.buttonWrapper}
                 onPress={handleSubmit}
@@ -333,9 +356,9 @@ const apiResponse = useSelector(state => state.user.userDataResponse);
                   )}
                 </LinearGradient>
               </TouchableOpacity>
-            </>
+            </View>
           )}
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
     </WelcomeScreenbackgroungpage>
   );
@@ -345,6 +368,14 @@ export default LifeStyleScreen;
 
 const styles = StyleSheet.create({
   keyboardView: {
+    flex: 1,
+  },
+
+  mainContainer: {
+    flex: 1,
+  },
+
+  scrollView: {
     flex: 1,
   },
 
@@ -449,8 +480,15 @@ const styles = StyleSheet.create({
     fontSize: RF(14),
   },
 
+  footer: {
+    paddingHorizontal: width * 0.04,
+    paddingTop: height * 0.012,
+    paddingBottom: height * 0.012,
+    backgroundColor: 'transparent',
+  },
+
   buttonWrapper: {
-    marginTop: height * 0.03,
+    width: '100%',
   },
 
   button: {

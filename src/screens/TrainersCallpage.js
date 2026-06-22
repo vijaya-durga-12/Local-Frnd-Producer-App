@@ -11,6 +11,7 @@ import {
   ScrollView,
   SafeAreaView,
   Platform,
+  RefreshControl,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -65,7 +66,9 @@ const TrainersCallPage = ({ navigation }) => {
 
   const { userdata } = useSelector(state => state.user);
   const users = useSelector(state => state.calls.searchingFemales || []);
-console.log("🔥 TrainersCallPage users:", users);
+
+  console.log('🔥 TrainersCallPage users:', users);
+
   const imageUrl = userdata?.images?.profile_image
     ? { uri: userdata.images.profile_image }
     : require('../assets/boy1.jpg');
@@ -76,6 +79,7 @@ console.log("🔥 TrainersCallPage users:", users);
   const [callingRandom, setCallingRandom] = useState(false);
   const [callingRandomVideo, setCallingRandomVideo] = useState(false);
   const [callingDirect, setCallingDirect] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [filters, setFilters] = useState({
     online: 1,
@@ -95,6 +99,15 @@ console.log("🔥 TrainersCallPage users:", users);
 
     return () => clearInterval(interval);
   }, [dispatch, filters]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    dispatch(searchingFemalesRequest(filters));
+
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  };
 
   const setOnlineFilter = () => {
     setFilters({
@@ -262,7 +275,7 @@ console.log("🔥 TrainersCallPage users:", users);
           <View style={styles.filterScrollBox}>
             <ScrollView
               horizontal
-              showsHorizontalScrollIndicator={true}
+              showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.filterRow}
             >
               <FilterChip
@@ -327,6 +340,14 @@ console.log("🔥 TrainersCallPage users:", users);
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.gridScrollContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#D51BF9']}
+                tintColor="#D51BF9"
+              />
+            }
           >
             <View style={styles.gridWrapper}>
               {users.map((item, index) => {
@@ -366,7 +387,8 @@ console.log("🔥 TrainersCallPage users:", users);
                           />
                         </View>
                       </View>
-                  <Text style={styles.userText}> name: {item.name}</Text>
+
+                      <Text style={styles.userText}>name: {item.name}</Text>
                     </TouchableOpacity>
                   </Animated.View>
                 );
