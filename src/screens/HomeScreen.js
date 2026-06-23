@@ -51,6 +51,24 @@ const HomeScreen = () => {
   const [callingRandom, setCallingRandom] = useState(false);
   const [callingRandomVideo, setCallingRandomVideo] = useState(false);
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refreshHomeData = useCallback(() => {
+    dispatch(userDatarequest());
+    dispatch(randomUserRequest());
+    dispatch(fetchUnreadCount());
+  }, [dispatch]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+
+    refreshHomeData();
+
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, [refreshHomeData]);
+
   const startRandomAudioCall = () => {
     if (!connected || callingRandom || callingRandomVideo) return;
 
@@ -83,10 +101,8 @@ const HomeScreen = () => {
   );
 
   useEffect(() => {
-    dispatch(userDatarequest());
-    dispatch(randomUserRequest());
-    dispatch(fetchUnreadCount());
-  }, [dispatch]);
+    refreshHomeData();
+  }, [refreshHomeData]);
 
   useEffect(() => {
     if (!socket) return;
@@ -177,6 +193,8 @@ const HomeScreen = () => {
             renderItem={renderItem}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContent}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
         </View>
       </View>

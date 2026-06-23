@@ -4,36 +4,40 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import RazorpayCheckout from "react-native-razorpay";
 import { useDispatch, useSelector } from "react-redux";
-import { verifyPaymentRequest, resetPurchase  } from "../features/purchase/purchaseActions";
+import {
+  verifyPaymentRequest,
+  resetPurchase,
+} from "../features/purchase/purchaseActions";
 
 const PaymentScreen = ({ route, navigation }) => {
   const dispatch = useDispatch();
 
   const { order, package: pkg } = route.params;
 
-  const { loading, paymentSuccess, error } = useSelector(
+  const { loading, paymentSuccess } = useSelector(
     (state) => state.purchase
   );
 
-  /* =============================
-     HANDLE SUCCESS / FAILURE
-  ============================= */
-const handleRetry = () => {
-  handlePayment();
-};
+  useEffect(() => {
+    dispatch(resetPurchase());
+  }, [dispatch]);
 
-  /* =============================
-     RAZORPAY
-  ============================= */
+  useEffect(() => {
+    if (paymentSuccess) {
+      navigation.replace("PaymentSuccessScreen");
+    }
+  }, [paymentSuccess, navigation]);
+
   const handlePayment = () => {
+    dispatch(resetPurchase());
+
     const options = {
-      key: "rzp_test_GRRNoJBdPElkDv", // 🔥 replace with real key
+      key: "rzp_test_GRRNoJBdPElkDv",
       amount: order.amount,
       currency: "INR",
       name: "Lokal Frnd",
@@ -41,35 +45,34 @@ const handleRetry = () => {
       order_id: order.order_id,
       prefill: {
         contact: "9999999999",
-        email: "test@gmail.com"
+        email: "test@gmail.com",
       },
-      theme: { color: "#9333EA" }
+      theme: {
+        color: "#9333EA",
+      },
     };
 
     RazorpayCheckout.open(options)
       .then((data) => {
         console.log("✅ PAYMENT SUCCESS:", data);
-  navigation.replace("PaymentSuccessScreen");
+
         dispatch(
           verifyPaymentRequest({
             razorpay_order_id: data.razorpay_order_id,
             razorpay_payment_id: data.razorpay_payment_id,
             razorpay_signature: data.razorpay_signature,
-            package_id: pkg.id
+            package_id: pkg.id,
           })
         );
       })
       .catch((err) => {
-  console.log("❌ PAYMENT FAILED:", err);
+        console.log("❌ RAZORPAY CLOSED / ERROR:", err);
 
-  // Ignore user cancel (very important)
-  if (err?.code === 0) return;
-
-  Alert.alert(
-    "Payment Failed",
-    err?.description || "Something went wrong"
-  );
-});
+        // No alert
+        // No error text
+        // No popup from app side
+        return;
+      });
   };
 
   return (
@@ -81,41 +84,23 @@ const handleRetry = () => {
         <Text style={styles.amount}>₹ {order.amount / 100}</Text>
       </View>
 
-      {/* 🔥 LOADING STATE */}
-    {/* LOADING */}
-{loading ? (
-  <ActivityIndicator size="large" color="#9333EA" />
-) : (
-  <>
-    {/* PAY BUTTON */}
-    <LinearGradient
-      colors={["#7C3AED", "#D946EF"]}
-      style={styles.payBtn}
-    >
-      <TouchableOpacity onPress={handlePayment}>
-        <Text style={styles.payText}>
-          PAY ₹ {order.amount / 100}
-        </Text>
-      </TouchableOpacity>
-    </LinearGradient>
-
-    {/* RETRY BUTTON (only on error) */}
-    {error && (
-      <TouchableOpacity
-        style={styles.retryBtn}
-        onPress={handleRetry}
-      >
-        <Text style={styles.retryText}>Retry Payment</Text>
-      </TouchableOpacity>
-    )}
-  </>
-)}
-
-      {/* 🔥 FAILED UI */}
-      {error && (
-        <Text style={styles.errorText}>
-          Payment Failed: {error}
-        </Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#9333EA" />
+      ) : (
+        <LinearGradient
+          colors={["#7C3AED", "#D946EF"]}
+          style={styles.payBtn}
+        >
+          <TouchableOpacity
+            style={styles.payTouchable}
+            activeOpacity={0.8}
+            onPress={handlePayment}
+          >
+            <Text style={styles.payText}>
+              PAY ₹ {order.amount / 100}
+            </Text>
+          </TouchableOpacity>
+        </LinearGradient>
       )}
     </View>
   );
@@ -127,64 +112,49 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#fff"
+    backgroundColor: "#fff",
   },
 
   title: {
     fontSize: 20,
     fontWeight: "700",
     marginBottom: 20,
-    color: '#000' // ✅ ADD
+    color: "#000",
   },
 
   card: {
     backgroundColor: "#f3f3f3",
     padding: 15,
     borderRadius: 10,
-    marginBottom: 20
+    marginBottom: 20,
   },
 
-  plan: { 
-  fontSize: 16,
-  color: "#000", // ✅ ADD
-},
+  plan: {
+    fontSize: 16,
+    color: "#000",
+  },
 
   amount: {
-  fontSize: 22,
-  fontWeight: "bold",
-  marginTop: 5,
-  color: "#000", // ✅ ADD
-},
+    fontSize: 22,
+    fontWeight: "bold",
+    marginTop: 5,
+    color: "#000",
+  },
 
   payBtn: {
     marginTop: 20,
-    padding: 15,
     borderRadius: 10,
-    alignItems: "center"
+    overflow: "hidden",
+  },
+
+  payTouchable: {
+    padding: 15,
+    alignItems: "center",
   },
 
   payText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "700"
+    fontWeight: "700",
   },
-
-  errorText: {
-    marginTop: 20,
-    color: "red",
-    textAlign: "center"
-  },
-  retryBtn: {
-  marginTop: 15,
-  padding: 12,
-  borderRadius: 10,
-  borderWidth: 1,
-  borderColor: "#9333EA",
-  alignItems: "center",
-},
-
-retryText: {
-  color: "#9333EA",
-  fontWeight: "700",
-},
 });

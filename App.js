@@ -41,6 +41,8 @@ import StoriesScreen from './src/screens/StoriesScreen';
 import CallStatusScreen from './src/screens/CallStatusScreen';
 import PerfectMatchScreen from './src/screens/PerfectMatchScreen';
 import SettingScreen from './src/screens/SettingScreen';
+import  PrivacyPolicyScreen from'./src/screens/PrivacyPolicyScreen';
+import AppsettingScreen from './src/screens/AppsettingScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import EditUserInterestScreen from './src/screens/EditUserInterestScreen';
 import EditUserLifestyleScreen from './src/screens/EditUserLifestyleScreen';
@@ -53,11 +55,7 @@ import StoryViewer from './src/screens/StoryViewer';
 import PaymentScreen from './src/screens/PaymentScreen';
 import PaymentSuccessScreen from './src/screens/PaymentSuccessScreen';
 import WithdrawFormScreen from './src/screens/WithdrawFormScreen';
-/*
-IMPORTANT
-If you really navigate to IncomingCallScreen,
-import it here also.
-*/
+
 import { useContext } from 'react';
 import { SocketContext } from './src/socket/SocketProvider';
 import IncomingCallScreen from './src/screens/IncomingCallScreen';
@@ -66,6 +64,8 @@ import { restoreLogin } from './src/features/Auth/authAction';
 import useCallHandler from './src/hooks/useCallHandler';
 import GlobalIncomingCall from './src/components/GlobalIncomingCall';
 import { useNavigationContainerRef } from '@react-navigation/native';
+import TermsofUseScreen from './src/screens/TermsofUseScreen';
+import CummunityGuidelineScreen from './src/screens/CummunityGuidelineScreen'
 
 const Stack = createNativeStackNavigator();
 
@@ -180,7 +180,12 @@ function MainNavigator({ navigationRef, isNavReady }) {
       />
       <Stack.Screen name="WithdrawFormScreen" component={WithdrawFormScreen} /> 
       <Stack.Screen name="SettingScreen" component={SettingScreen} />
+       <Stack.Screen name="AppsettingScreen" component={AppsettingScreen} />
       <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
+       <Stack.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen} />
+       <Stack.Screen name="TermsofUseScreen" component={TermsofUseScreen} />
+       <Stack.Screen name="CummunityGuidelineScreen" component={CummunityGuidelineScreen} />
+
       <Stack.Screen
         name="EditUserInterestScreen"
         component={EditUserInterestScreen}

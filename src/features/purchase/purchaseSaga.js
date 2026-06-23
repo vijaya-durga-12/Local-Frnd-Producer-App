@@ -69,7 +69,7 @@ function* verifyPaymentSaga(action) {
         }
       }
     );
-
+console.log("VERIFY REQUEST", action.payload);
     console.log("VERIFY API:", response.data);
 
     yield put(verifyPaymentSuccess(response.data.data));
