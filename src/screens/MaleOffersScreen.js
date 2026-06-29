@@ -20,7 +20,7 @@ const hp = v => (height * v) / 100;
 const getContent = (contents = [], key) =>
   (contents.find(c => c.content_key === key) || {}).content_value || "";
 
-const OffersSectionScreen = () => {
+const MaleOffersScreen = () => {
   const dispatch = useDispatch();
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -34,10 +34,8 @@ const OffersSectionScreen = () => {
     dispatch(getOffersRequest());
   }, [dispatch]);
 
-  const handleScroll = event => {
-    const index = Math.round(
-      event.nativeEvent.contentOffset.x / width,
-    );
+  const handleScroll = e => {
+    const index = Math.round(e.nativeEvent.contentOffset.x / width);
     setActiveIndex(index);
   };
 
@@ -52,6 +50,8 @@ const OffersSectionScreen = () => {
           <ScrollView
             horizontal
             pagingEnabled
+            decelerationRate="fast"
+            snapToInterval={width}
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={handleScroll}
           >
@@ -61,10 +61,10 @@ const OffersSectionScreen = () => {
               const title2   = getContent(item.contents, "title2");
               const subtitle = getContent(item.contents, "subtitle");
 
-              const btn         = item.button || {};
-              const buttonText  = btn.button_text  || "Explore";
-              const buttonBg    = btn.button_color  || "#6D21B8";
-              const buttonTxt   = btn.text_color    || "#FFFFFF";
+              const btn        = item.button || {};
+              const buttonText = btn.button_text || "Explore";
+              const buttonBg   = btn.button_color || "#FF6A00";
+              const buttonTxt  = btn.text_color   || "#FFFFFF";
 
               const features = item.features || [];
 
@@ -81,17 +81,19 @@ const OffersSectionScreen = () => {
                       {/* Brand row */}
                       <View style={styles.brandRow}>
                         <View style={styles.logoBox}>
-                          <Ionicons name="heart" size={wp(3)} color="#fff" />
+                          <Ionicons name="heart" size={wp(3)} color="#FF2D7A" />
                         </View>
                         <Text numberOfLines={1} style={styles.brandText}>
-                          {brand || "LokalFrnd RJ"}
+                          {brand || "LokalFrnd"}
                         </Text>
                       </View>
 
-                      {/* Titles */}
+                      {/* Title line 1 – white */}
                       <Text numberOfLines={2} style={styles.title1}>
                         {title1}
                       </Text>
+
+                      {/* Title line 2 – accent yellow */}
                       <Text numberOfLines={2} style={styles.title2}>
                         {title2}
                       </Text>
@@ -101,9 +103,27 @@ const OffersSectionScreen = () => {
                         {subtitle}
                       </Text>
 
+                      {/* Feature pills row (bottom of left column) */}
+                      {features.length > 0 && (
+                        <View style={styles.pillsRow}>
+                          {features.map((f, i) => (
+                            <View key={f.id || i} style={styles.pill}>
+                              <Ionicons
+                                name={f.icon || "star"}
+                                size={wp(2.4)}
+                                color="#fff"
+                              />
+                              <Text numberOfLines={1} style={styles.pillText}>
+                                {f.title}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+
                       {/* CTA Button */}
                       <TouchableOpacity
-                        activeOpacity={0.85}
+                        activeOpacity={0.9}
                         style={[styles.button, { backgroundColor: "#fff" }]}
                       >
                         <Text
@@ -114,26 +134,10 @@ const OffersSectionScreen = () => {
                         </Text>
                         <Ionicons
                           name="arrow-forward"
-                          size={wp(2.8)}
+                          size={wp(3.5)}
                           color={buttonBg}
                         />
                       </TouchableOpacity>
-                    </View>
-
-                    {/* ── RIGHT FEATURE BOXES ── */}
-                    <View style={styles.rightContent}>
-                      {features.map((f, i) => (
-                        <View key={f.id || i} style={styles.rightBox}>
-                          <Ionicons
-                            name={f.icon || "star"}
-                            size={wp(2.6)}
-                            color="#fff"
-                          />
-                          <Text numberOfLines={2} style={styles.rightText}>
-                            {f.title}
-                          </Text>
-                        </View>
-                      ))}
                     </View>
                   </ImageBackground>
                 </View>
@@ -159,7 +163,7 @@ const OffersSectionScreen = () => {
   );
 };
 
-export default OffersSectionScreen;
+export default MaleOffersScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -200,9 +204,9 @@ const styles = StyleSheet.create({
   // ── LEFT ──
   leftContent: {
     position: "absolute",
-    left: wp(5.2),
-    top: hp(2.2),
-    width: "42%",
+    left: wp(5),
+    top: hp(2),
+    width: "55%",
     zIndex: 10,
     elevation: 10,
   },
@@ -210,104 +214,99 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: hp(0.4),
+    marginBottom: hp(0.5),
     width: "100%",
   },
 
   logoBox: {
-    width: wp(4),
-    height: wp(4),
-    borderRadius: wp(1),
-    backgroundColor: "#EC2C83",
+    width: wp(5),
+    height: wp(5),
+    borderRadius: wp(1.2),
+    backgroundColor: "rgba(255,255,255,0.18)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: wp(0.8),
+    marginRight: wp(1),
   },
 
   brandText: {
     color: "#fff",
-    fontSize: wp(3),
+    fontSize: wp(3.2),
     fontWeight: "900",
     flex: 1,
   },
 
   title1: {
     color: "#FFFFFF",
-    fontSize: wp(3.8),
+    fontSize: wp(4.5),
     fontWeight: "900",
-    lineHeight: wp(4.6),
+    lineHeight: wp(5.4),
   },
 
   title2: {
-    color: "#FFD400",
-    fontSize: wp(3.8),
+    color: "#FFD500",
+    fontSize: wp(4.5),
     fontWeight: "900",
-    lineHeight: wp(4.6),
-    marginBottom: hp(0.3),
+    lineHeight: wp(5.4),
+    marginBottom: hp(0.4),
   },
 
   subtitle: {
     color: "rgba(255,255,255,0.85)",
-    fontSize: wp(2),
+    fontSize: wp(2.4),
     fontWeight: "600",
-    lineHeight: wp(2.7),
+    lineHeight: wp(3.2),
     marginBottom: hp(0.6),
   },
 
-  button: {
-    marginTop: hp(0.5),
-    alignSelf: "flex-start",
-    paddingHorizontal: wp(3),
-    height: hp(3.4),
-    borderRadius: wp(6),
+  // Feature pills (for COIN banner style — inline row)
+  pillsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: wp(1),
+    marginBottom: hp(0.8),
+  },
+
+  pill: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+    borderRadius: wp(4),
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(0.35),
     gap: wp(0.8),
   },
 
-  buttonText: {
-    fontSize: wp(2.4),
+  pillText: {
+    color: "#fff",
+    fontSize: wp(2),
     fontWeight: "700",
   },
 
-  // ── RIGHT ──
-  rightContent: {
-    position: "absolute",
-    right: wp(2.5),
-    top: hp(2.5),
-    width: "22%",
-    zIndex: 10,
-    elevation: 10,
-    gap: hp(0.4),
-  },
-
-  rightBox: {
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.25)",
-    borderRadius: wp(1.6),
-    backgroundColor: "rgba(0,0,0,0.15)",
+  button: {
+    alignSelf: "flex-start",
+    paddingHorizontal: wp(5),
+    height: hp(4.2),
+    borderRadius: wp(8),
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: wp(1),
-    paddingVertical: hp(0.5),
-    marginBottom: hp(0.4),
+    justifyContent: "center",
+    gap: wp(1),
+    marginTop: hp(0.4),
   },
 
-  rightText: {
-    flex: 1,
-    color: "#fff",
-    fontSize: wp(1.7),
+  buttonText: {
+    fontSize: wp(3.4),
     fontWeight: "800",
-    lineHeight: wp(2.2),
-    marginLeft: wp(0.5),
   },
 
   // ── PAGINATION ──
   pagination: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: hp(1),
+    alignItems: "center",
+    marginTop: hp(1.8),
   },
 
   pageDot: {
